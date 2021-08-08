@@ -1,0 +1,108 @@
+[x] nop
+[x] getlocal
+[x] setlocal
+[x] getblockparam
+[x] setblockparam
+[x] getblockparamproxy
+[x] getspecial
+[x] setspecial
+[x] getinstancevariable
+[x] setinstancevariable
+[x] getclassvariable
+[x] setclassvariable
+[x] getconstant
+[x] setconstant
+[x] getglobal
+[x] setglobal
+[x] putnil
+[x] putself
+[x] putobject
+[x] putspecialobject
+[x] putiseq // removed in 2.7
+[x] putstring
+[x] concatstrings
+[x] tostring
+[x] freezestring // removed in 3.0
+[x] toregexp
+[x] intern
+[x] newarray
+[x] newarraykwsplat // added in 2.7
+[x] duparray
+[x] duphash
+[x] expandarray
+[x] concatarray
+[x] splatarray
+[x] newhash
+[x] newrange
+[x] pop
+[x] dup
+[x] dupn
+[x] swap
+[x] reverse
+[x] reput // DEFINE_INSN_IF(STACK_CACHING) from ruby 2.7
+[x] topn
+[x] setn
+[x] adjuststack
+[x] defined
+[x] checkmatch
+[x] checkkeyword
+[x] checktype
+[x] defineclass
+[x] definemethod // added in 2.7
+[x] definesmethod // added in 2.7
+[x] send
+[x] opt_send_without_block
+[x] opt_str_freeze
+[x] opt_nil_p // added in 2.7
+[x] opt_str_uminus
+[x] opt_newarray_max
+[x] opt_newarray_min
+[x] invokesuper
+[x] invokeblock
+[x] leave
+[x] throw
+[x] jump
+[x] branchif
+[x] branchunless
+[x] branchnil
+[x] opt_getinlinecache
+[x] opt_setinlinecache
+[x] once
+[x] opt_case_dispatch
+[x] opt_plus
+[x] opt_minus
+[x] opt_mult
+[x] opt_div
+[x] opt_mod
+[x] opt_eq
+[x] opt_neq
+[x] opt_lt
+[x] opt_le
+[x] opt_gt
+[x] opt_ge
+[x] opt_ltlt
+[x] opt_and
+[x] opt_or
+[x] opt_aref
+[x] opt_aset
+[x] opt_aset_with
+[x] opt_aref_with
+[x] opt_length
+[x] opt_size
+[x] opt_empty_p
+[x] opt_succ
+[x] opt_not
+[x] opt_regexpmatch1 // removed in 2.7
+[x] opt_regexpmatch2
+[x] opt_call_c_function // DEFINE_INSN_IF(SUPPORT_CALL_C_FUNCTION) as of ruby 3.0
+[x] bitblt // DEFINE_INSN_IF(SUPPORT_JOKE) as of ruby 2.7
+[x] answer // DEFINE_INSN_IF(SUPPORT_JOKE) as of ruby 2.7
+[x] invokebuiltin // added in ruby 2.7
+[x] opt_invokebuiltin_delegate // added in ruby 2.7
+[x] opt_invokebuiltin_delegate_leave // added in ruby 2.7
+[x] getlocal_WC_0
+[x] getlocal_WC_1
+[x] setlocal_WC_0
+[x] setlocal_WC_1
+[x] putobject_INT2FIX_0_
+[x] putobject_INT2FIX_1_

@@ -1,0 +1,7 @@
+Dockerfile.*
+agent/
+*.bak
+test/
+.dockerignore
+*.tar.gz
+*.tgz
