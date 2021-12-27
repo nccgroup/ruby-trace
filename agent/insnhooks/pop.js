@@ -36,7 +36,7 @@ module.exports = function(args) {
   // ()
   try {
     let val_inspect = r.rb_inspect2(vm.TOPN(0))
-    log(">> pop { " + val_inspect + " }");
+    log(">> pop (" + val_inspect + ")");
   } catch (e) {
     log("Error [pop]: " + String(e))
   }

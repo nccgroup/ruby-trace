@@ -67,7 +67,14 @@ module.exports = function(args) {
     let len;
     let obj = ary;
 
+    let flags = [];
     let is_splat = (flag & 0x01) != 0;
+    if (is_splat) {
+      flags.push("is_splat");
+    }
+    if ((flag & 0x04) != 0) {
+      flags.push("reverse");
+    }
     let space_size = num + (is_splat ? 1 : 0);
     // let base = sp.sub(1*Process.pointerSize);
 
@@ -126,6 +133,8 @@ module.exports = function(args) {
         //base.writePointer(nary);
         arr.push(r.rb_inspect2(nary));
       }
+
+      flags.push("postarg");
     } else {
       // log(">> space_size != 0 && else path")
       /* normal: ary[num..-1], ary[num-2], ary[num-3], ..., ary[0] # top */
@@ -164,8 +173,13 @@ module.exports = function(args) {
       arr_inspect = "[ " + arr.join(', ') + " ]"
     }
 
+    let flag_str = "";
+    if (flags.length > 0) {
+      flag_str = " (" + flags.join("|") + ")";
+    }
+    
     let ary_inspect = r.rb_inspect2(ary)
-    log(">> expandarray num: " + num + ", flag: " + flag + ", ary: " + ary_inspect + ", expansion: " + arr_inspect + " (bottom->top)");
+    log(">> expandarray num: " + num + ", flag: " + flag + flag_str + ", ary: " + ary_inspect + ", expansion: " + arr_inspect + " (bottom->top)");
     vm.return_callback = leave(space_size);
   } catch (e) {
     log("Error [expandarray]: " + String(e))

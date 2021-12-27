@@ -38,7 +38,7 @@ module.exports = function(args) {
     let self = vm.GET_SELF()
     let self_inspect = r.rb_inspect2(self);
 
-    log(">> putself {" + self_inspect + "}");
+    log(">> putself (" + self_inspect + ")");
   } catch (e) {
     log("Error [putself]: " + String(e))
   }

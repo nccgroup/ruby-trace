@@ -62,12 +62,13 @@ module.exports = function(name) {
   // (VALUE val)
   // // attr rb_snum_t sp_inc = - (int)(ci->orig_argc + ((ci->flag & VM_CALL_ARGS_BLOCKARG) ? 1 : 0));
   return function(args, last_simple_insn, last_insn_cb) {
+    let cfp;
     try {
       if (indent_s === null) {
         indent_s = r.rb_str_new_cstr(indent_p);
       }
 
-      let cfp = vm.GET_CFP();
+      cfp = vm.GET_CFP();
       let sp = vm.GET_SP(cfp);
 
       // ruby 2.6
@@ -107,6 +108,7 @@ module.exports = function(name) {
         }
         case 27:
         case 30:
+        case 31:
         default: {
           // vm_sendish
           let cd_p = vm.GET_OPERAND(1, cfp)
@@ -182,6 +184,7 @@ module.exports = function(name) {
           break;
         }
         case 30:
+        case 31:
         default: {
           switch (name) {
             case 'invokeblock': {
@@ -294,6 +297,7 @@ module.exports = function(name) {
             break;
           }
           case 30:
+          case 31:
           default: {
             kw_args_p = vm.native.rb_callinfo__kwarg(ci_p)
             if (kw_args_p != ptr(0)) {
@@ -419,5 +423,41 @@ module.exports = function(name) {
       //vm.return_callback = null;
       log("Error [call_ops:" + name + "]: " + String(e))
     }
+
+    if (r.vm_sendish == null) {
+      try {
+        //log(">> inlined vm_sendish hit")
+        switch (vm.ruby_version) {
+          case 26: {
+            break;
+          }
+          case 27:
+          case 30:
+          case 31:
+          default: {
+            let reg_cfp = cfp; //args[1]
+            let cd_p = vm.GET_OPERAND(1, cfp) //args[2]
+
+            let ci_p = vm.native.rb_call_data__ci(cd_p)
+            let cc_p = vm.native.rb_call_data__cc(cd_p)
+
+            let argc = vm.native.rb_callinfo__argc(ci_p)
+            let recv = vm.TOPN(argc, null, reg_cfp)
+
+            let klass = r.rb_class_of(recv);
+
+            let cached = vm.native.rb_callcache__INLINE_METHOD_CACHE_CHECK(cc_p, klass);
+            if (cached == 1) {
+              let call_p = vm.native.rb_callcache__call_(cc_p)
+              let call_s = r.get_func_name(call_p)
+              log(">> vm_sendish [inlined]: inline method cache hit, cd->cc->call_: " + call_s);
+            }
+          }
+        }
+      } catch (e) {
+        log("Error [call_ops:" + name + ":vm_sendish]: " + String(e))
+      }    
+    }
+    
   }
 }

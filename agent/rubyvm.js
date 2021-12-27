@@ -316,9 +316,13 @@ class RubyVM {
               self.native = require('./ruby30/native')(self);
               break;
             }
+            case 31: {
+              self.native = require('./ruby31/native')(self);
+              break;
+            }
             default: {
-              console.log("unknown ruby version")
-              self.native = require('./ruby30/native')(self);
+              console.log("unknown ruby version, defaulting to 3.1")
+              self.native = require('./ruby31/native')(self);
             }
           }
         }

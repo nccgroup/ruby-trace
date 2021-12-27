@@ -1,6 +1,6 @@
 {
   "name": "ruby-trace",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Frida-based tracer, for Ruby",
   "bin": {
     "ruby-trace": "./bin/cli.js"

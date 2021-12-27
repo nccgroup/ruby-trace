@@ -36,8 +36,23 @@ let { log } = require('../libc')();
 let leave = function(msg, ic, val_in_inspect) {
   return function() {
     try {
-      let ic_serial = vm.native.iseq_inline_cache_entry__ic_serial(ic).toNumber()
-      let ic_cref = vm.native.iseq_inline_cache_entry__ic_cref(ic)
+      let ic_serial = null;
+      let ic_cref = null;
+      switch (vm.ruby_version) {
+        case 26:
+        case 27:
+        case 30: {
+          ic_serial = vm.native.iseq_inline_cache_entry__ic_serial(ic).toNumber()
+          ic_cref = vm.native.iseq_inline_cache_entry__ic_cref(ic)
+          break;
+        }
+        case 31:
+        default: {
+          ic_serial = vm.native.iseq_inline_constant_cache__ic_serial(ic).toNumber()
+          ic_cref = vm.native.iseq_inline_constant_cache__ic_cref(ic)
+        }
+      }
+          
       log(">> opt_setinlinecache ic_serial: " + ic_serial + ", ic_cref: @" + ic_cref + " { " + val_in_inspect + " }")  
     } catch (e) {
       log(msg)
@@ -55,12 +70,22 @@ let leave = function(msg, ic, val_in_inspect) {
 
 module.exports = function(args) {
   // /* set inline cache */
+  // ruby 2.6-3.0
   // opt_setinlinecache
   // (IC ic)
   // (VALUE val)
   // (VALUE val)
+
+  // ruby 3.1
+  // opt_setinlinecache
+  // (IC ic)
+  // (VALUE val)
+  // (VALUE val)
+  // // attr bool leaf = false;
   try {
     let cfp = vm.GET_CFP()
+    // ruby 3.0: struct iseq_inline_cache_entry *IC;
+    // ruby 3.1: struct iseq_inline_constant_cache *IC;
     let ic = vm.GET_OPERAND(1, cfp)
 
     let val = vm.TOPN(0);

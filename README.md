@@ -1,7 +1,7 @@
 # ruby-trace
 
 ruby-trace is a frida-based tracer for (c)[ruby](https://github.com/ruby/ruby).
-It currently supports ruby 2.6-3.0.
+It currently supports ruby 2.6-3.1.
 
 # Install
 

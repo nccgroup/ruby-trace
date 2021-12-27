@@ -38,10 +38,18 @@ let leave = function(type_str) {
 
 module.exports = function(args) {
   // /* put special object.  "value_type" is for expansion. */
+  // ruby 2.6-3.0
   // putspecialobject
   // (rb_num_t value_type)
   // ()
   // (VALUE val)
+
+  // ruby 3.1
+  // putspecialobject
+  // (rb_num_t value_type)
+  // ()
+  // (VALUE val)
+  // // attr bool leaf = (value_type == VM_SPECIAL_OBJECT_VMCORE); /* others may raise when allocating singleton */
   try {
     let value_type = parseInt(vm.GET_OPERAND(1).toString(16))
     let type_str = String(value_type);

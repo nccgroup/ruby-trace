@@ -1778,6 +1778,7 @@ class Hooks {
       }
       case 27:
       case 30:
+      case 31:
       default: {
         this.rb_vm_call0_sig = ['pointer', VALUE, ID, 'int', 'pointer', 'pointer', 'int'];
       }
@@ -1790,7 +1791,7 @@ class Hooks {
           try {
             self.trace()
           } catch (e) {
-            log("Error [rb_tracepoint_enable...]: " + String(e))
+            log("Error [" + s + "]: " + String(e))
           }
         }
       });
@@ -1802,7 +1803,7 @@ class Hooks {
           try {
             self.trace()
           } catch(e) {
-            log("Error [rb_hook_list_connect_tracepoint...]: " + String(e))
+            log("Error [" + s + "]: " + String(e))
           }
         }
       });
@@ -1850,6 +1851,7 @@ class Hooks {
         break;
       }
       case 30:
+      case 31:
       default: {
         //note: in ruby 3.0, only the first of each cfunc call is to vm_call_cfunc,
         //      which calls vm_call_cfunc_with_frame directly, but also sets
@@ -1895,6 +1897,7 @@ class Hooks {
       }
       case 27:
       case 30:
+      case 31:
       default: {
         Interceptor.replace(this._rb_vm_call0, new NativeCallback((ec, recv, id, argc, argv, me, kw_splat) => {
           let log_str = trace_rb_vm_call0([ec, recv, id, ptr(argc), argv, me, ptr(kw_splat)]);
@@ -1904,96 +1907,111 @@ class Hooks {
           }
           return ret;
         }, VALUE, this.rb_vm_call0_sig));
+      }
+    }
 
-        if (vm.OPT_INLINE_METHOD_CACHE()) {
-          switch (vm.ruby_version) {
-            case 27: {
-              //note: in ruby 2.7, it looks like the reason vm_call_cfunc seems to be called every time for a cfunc call
-              //      is that the caching is not as good as in ruby 3.0, and additionally, even if the caching happens,
-              //      it is vm_call_cfunc itself that is the cached function called directly.
-              this.tracer_interceptors['vm_search_method_fastpath'] = Interceptor.attach(r.sym_to_addr_map['vm_search_method_fastpath'].address, function(args){
-                // log(">> vm_search_method_fastpath hit")
-                let cd_p = args[0]
-                let klass = args[1]
-                let cc_p = vm.native.rb_call_data__cc(cd_p)
-                let serial = vm.native.RCLASS_SERIAL(klass)
+    if (vm.OPT_INLINE_METHOD_CACHE()) {
+      switch (vm.ruby_version) {
+        case 27: {
+          //note: in ruby 2.7, it looks like the reason vm_call_cfunc seems to be called every time for a cfunc call
+          //      is that the caching is not as good as in ruby 3.0, and additionally, even if the caching happens,
+          //      it is vm_call_cfunc itself that is the cached function called directly.
+          this.tracer_interceptors['vm_search_method_fastpath'] = Interceptor.attach(r.sym_to_addr_map['vm_search_method_fastpath'].address, function(args){
+            // log(">> vm_search_method_fastpath hit")
+            let cd_p = args[0]
+            let klass = args[1]
+            let cc_p = vm.native.rb_call_data__cc(cd_p)
+            let serial = vm.native.RCLASS_SERIAL(klass)
 
-                let has_class_serial = vm.native.rb_call_cache__has_class_serial(cc_p, serial)
-                if (has_class_serial == 1) {
-                  // log(">> has class serial!")
-                  let call_p = vm.native.rb_call_cache__call(cc_p)
-                  if (!call_p.isNull()) {
-                    let call_s = r.get_func_name(call_p)
-                    log(">> vm_search_method_fastpath: inline method cache hit, cd->cc->call: " + call_s);
+            let has_class_serial = vm.native.rb_call_cache__has_class_serial(cc_p, serial)
+            if (has_class_serial == 1) {
+              // log(">> has class serial!")
+              let call_p = vm.native.rb_call_cache__call(cc_p)
+              if (!call_p.isNull()) {
+                let call_s = r.get_func_name(call_p)
+                log(">> vm_search_method_fastpath: inline method cache hit, cd->cc->call: " + call_s);
 
-                    // if (call_s.startsWith("vm_call_iseq_")) {
-                    //   return;
-                    // }
-                    // if (!(call_p in self.cfunc_hooks_metadatas) && !(call_p in r.rb_define_method_metadatas)) {
-                    //   log(">> hooking cached func dynamically")
-                    //   let ci_p = vm.native.rb_call_data__ci(cd_p)
-                    //   let mid_p = vm.native.rb_call_info__mid(ci_p)
-                    //   let mid = r.rb_id2name(mid_p).readUtf8String();
-                    //   log(">> mid: " + mid)
-                    //   let me_p = vm.native.rb_call_cache__me(cc_p);
-                    //   let def_p = vm.native.rb_callable_method_entry_t__def(me_p);
-                    //   let argc = vm.native.rb_method_definition_struct__cfunc__argc(def_p)
-                    //   let call_info_orig_argc = vm.native.rb_call_info__orig_argc(ci_p);
+                // if (call_s.startsWith("vm_call_iseq_")) {
+                //   return;
+                // }
+                // if (!(call_p in self.cfunc_hooks_metadatas) && !(call_p in r.rb_define_method_metadatas)) {
+                //   log(">> hooking cached func dynamically")
+                //   let ci_p = vm.native.rb_call_data__ci(cd_p)
+                //   let mid_p = vm.native.rb_call_info__mid(ci_p)
+                //   let mid = r.rb_id2name(mid_p).readUtf8String();
+                //   log(">> mid: " + mid)
+                //   let me_p = vm.native.rb_call_cache__me(cc_p);
+                //   let def_p = vm.native.rb_callable_method_entry_t__def(me_p);
+                //   let argc = vm.native.rb_method_definition_struct__cfunc__argc(def_p)
+                //   let call_info_orig_argc = vm.native.rb_call_info__orig_argc(ci_p);
 
-                    //   log(">> argc: " + argc)
+                //   log(">> argc: " + argc)
 
-                    //   let metadata = {
-                    //     method: {
-                    //       mid: mid,
-                    //     },
-                    //     cfunc: {
-                    //       func_p: call_p,
-                    //       func_s: call_s,
-                    //       def_argc: argc,
-                    //       rt_argc: call_info_orig_argc
-                    //     }
-                    //   };
-              
-                    //   self.cfunc_hooks_metadatas[cfunc_func_p] = metadata
-                    //   self.hook_cfunc(metadata, true);
-                    // }
+                //   let metadata = {
+                //     method: {
+                //       mid: mid,
+                //     },
+                //     cfunc: {
+                //       func_p: call_p,
+                //       func_s: call_s,
+                //       def_argc: argc,
+                //       rt_argc: call_info_orig_argc
+                //     }
+                //   };
+          
+                //   self.cfunc_hooks_metadatas[cfunc_func_p] = metadata
+                //   self.hook_cfunc(metadata, true);
+                // }
 
-                  }
-                }/* else {
-                  log(">> does not have class serial: " + has_class_serial)
-                }*/
-              })    
-              break;
-            }
-            case 30:
-            default: {
-              this.tracer_interceptors['vm_sendish'] = Interceptor.attach(r.vm_sendish.address, function(args){
-                // log(">> vm_sendish hit")
-                let method_explorer = args[4]
-                if (!method_explorer.equals(ptr(0x0))) { // 0: mexp_search_method, but it's also a good check for the mjit funcptr variant
-                  return;
-                }
-                let reg_cfp = args[1]
-                let cd_p = args[2]
-                let ci_p = vm.native.rb_call_data__ci(cd_p)
-                let cc_p = vm.native.rb_call_data__cc(cd_p)
+              }
+            }/* else {
+              log(">> does not have class serial: " + has_class_serial)
+            }*/
+          })    
+          break;
+        }
+        case 30:
+        case 31: //note: likely inlined
+        default: {
+          if (r.vm_sendish != null) {
+            this.tracer_interceptors['vm_sendish'] = Interceptor.attach(r.vm_sendish.address, function(args){
+              // log(">> vm_sendish hit")
+              let method_explorer = args[4]
+              if (!method_explorer.equals(ptr(0x0))) { // 0: mexp_search_method, but it's also a good check for the mjit funcptr variant
+                return;
+              }
+              let reg_cfp = args[1]
+              let cd_p = args[2]
+              let ci_p = vm.native.rb_call_data__ci(cd_p)
+              let cc_p = vm.native.rb_call_data__cc(cd_p)
 
-                let argc = vm.native.rb_callinfo__argc(ci_p)
-                //VALUE recv = TOPN(argc);
-                let recv = vm.TOPN(argc, null, reg_cfp)
+              let argc = vm.native.rb_callinfo__argc(ci_p)
+              //VALUE recv = TOPN(argc);
+              let recv = vm.TOPN(argc, null, reg_cfp)
 
-                //CLASS_OF(recv)
-                let klass = r.rb_class_of(recv);
+              //CLASS_OF(recv)
+              let klass = r.rb_class_of(recv);
 
-                let cached = vm.native.rb_callcache__INLINE_METHOD_CACHE_CHECK(cc_p, klass);
-                if (cached == 1) {
-                  let call_p = vm.native.rb_callcache__call_(cc_p)
-                  let call_s = r.get_func_name(call_p)
-                  log(">> vm_sendish: inline method cache hit, cd->cc->call_: " + call_s);
-                }
-    
-              })                  
-            }
+              let cached = vm.native.rb_callcache__INLINE_METHOD_CACHE_CHECK(cc_p, klass);
+              if (cached == 1) {
+                let call_p = vm.native.rb_callcache__call_(cc_p)
+                let call_s = r.get_func_name(call_p)
+                log(">> vm_sendish: inline method cache hit, cd->cc->call_: " + call_s);
+              }
+  
+            });  
+          } else { // we get creative
+            //note: there are 4 callers of vm_sendish
+            //      * insn send, w/ mexp_search_method
+            //      * insn opt_send_without_block, w/ mexp_search_method
+            //      * insn invokesuper, w/ mexp_search_super
+            //      * insn invokeblock, w/ mexp_search_invokeblock
+            //
+            //      while there are no symbols for the method_explorer
+            //      funcs, we don't actually need to check it if we use
+            //      the insns entry points themselves
+            //
+            //      so we handle this in call_ops
           }
         }
       }
@@ -2432,6 +2450,7 @@ function trace_rb_vm_call0(args) {
       }
       case 27:
       case 30:
+      case 31:
       default: {
         //note: we are forcing args[6] to be a ptr like it would be w/ attach
         //      so we can revert back to attach in the future.
@@ -2545,6 +2564,7 @@ function trace_vm_call_cfunc(hooks) {
           break;
         }
         case 30:
+        case 31:
         default: {
           cc_p = vm.native.rb_calling_info__cc(calling_p);
         }
@@ -2559,6 +2579,7 @@ function trace_vm_call_cfunc(hooks) {
             break;
           }
           case 30:
+          case 31:
           default: {
             me_p = vm.native.rb_callcache__cme_(cc_p);
           }
@@ -2597,6 +2618,7 @@ function trace_vm_call_cfunc(hooks) {
           break;
         }
         case 30:
+        case 31:
         default: {
           ci_p = vm.native.rb_calling_info__ci(calling_p);
         }
@@ -2612,6 +2634,7 @@ function trace_vm_call_cfunc(hooks) {
             break;
           }
           case 30:
+          case 31:
           default: {
             mid_p = vm.native.rb_callinfo__mid(ci_p);
             call_info_orig_argc = vm.native.rb_callinfo__argc(ci_p);

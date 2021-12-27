@@ -63,6 +63,7 @@ module.exports = function(args) {
         break;
       }
       case 30:
+      case 31:
       default: {
         gid = vm.GET_OPERAND(1)
       }

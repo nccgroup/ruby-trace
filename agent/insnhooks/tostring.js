@@ -28,26 +28,47 @@ let r = require('../ruby')();
 let vm = require('../rubyvm')();
 let { log } = require('../libc')();
 
-let leave = function() {
-  let val_p = vm.TOPN(0);
-  let val_inspect = r.rb_inspect2(val_p);
-  log(">> tostring -> " + val_inspect);
-}
+module.exports = function(name) {
 
-module.exports = function(args) {
-  // /* push the result of to_s. */
-  // tostring
-  // ()
-  // (VALUE val, VALUE str)
-  // (VALUE val)
-  try {
-    let sp = vm.GET_SP();
-    let val = r.rb_inspect2(vm.TOPN(1, sp))
-    let str = r.rb_inspect2(vm.TOPN(0, sp))
-
-    log(">> tostring val: " + val + ", str: " + str);
-    vm.return_callback = leave;
-  } catch (e) {
-    log("Error [tostring]: " + String(e))
+  let leave = function() {
+    let val_p = vm.TOPN(0);
+    let val_inspect = r.rb_inspect2(val_p);
+    log(">> " + name + " -> " + val_inspect);
   }
+
+  return function(args) {
+    // /* push the result of to_s. */
+    // ruby 2.6-3.0
+    // tostring
+    // ()
+    // (VALUE val, VALUE str)
+    // (VALUE val)
+
+    // /* Convert the result to string if not already a string.
+    //    This is used as a backup if to_s does not return a string. */
+    // ruby 3.1
+    // anytostring
+    // ()
+    // (VALUE val, VALUE str)
+    // (VALUE val)
+
+    // ruby 3.0:
+    // 0023 opt_send_without_block                 <calldata!mid:to_s, argc:0, FCALL|ARGS_SIMPLE>
+    // 0025 tostring
+
+    // ruby 3.1:
+    // 0018 objtostring                            <calldata!mid:to_s, argc:0, FCALL|ARGS_SIMPLE>
+    // 0020 anytostring
+    try {
+      let sp = vm.GET_SP();
+      let val = r.rb_inspect2(vm.TOPN(1, sp))
+      let str = r.rb_inspect2(vm.TOPN(0, sp))
+
+      log(">> " + name + " val: " + val + ", str: " + str);
+      vm.return_callback = leave;
+    } catch (e) {
+      log("Error [" + name + "]: " + String(e))
+    }
+  }
+
 }

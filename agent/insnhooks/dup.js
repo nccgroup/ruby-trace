@@ -56,7 +56,7 @@ module.exports = function(args) {
   try {
     let val_inspect = r.rb_inspect2(vm.TOPN(0))
 
-    log(">> dup { " + val_inspect + " }");
+    log(">> dup (" + val_inspect + ")");
     vm.return_callback = leave;
   } catch (e) {
     log("Error [dup]: " + String(e))

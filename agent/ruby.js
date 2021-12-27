@@ -1174,10 +1174,10 @@ class Ruby {
     //                            RARRAY(a)->as.ary : RARRAY(a)->as.heap.ptr);
     let flags = this.RBasic__flags(a);
     if (flags & this.RARRAY_EMBED_FLAG) {
-      log(">> rb_array_const_ptr_transient -> RARRAY_EMBED_FLAG");
+      //log(">> rb_array_const_ptr_transient -> RARRAY_EMBED_FLAG");
       return this.RArray__as_ary(a);
     } else {
-      log(">> rb_array_const_ptr_transient -> !RARRAY_EMBED_FLAG");
+      //log(">> rb_array_const_ptr_transient -> !RARRAY_EMBED_FLAG");
       return this.RArray__as_heap_ptr(a);
     }
   }

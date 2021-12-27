@@ -77,6 +77,7 @@ module.exports = function(args) {
       }
       case 27:
       case 30:
+      case 31:
       default: {
         let obj_class = r.rb_class_of(obj)
 

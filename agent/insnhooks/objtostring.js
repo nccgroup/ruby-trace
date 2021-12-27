@@ -28,30 +28,43 @@ let r = require('../ruby')();
 let vm = require('../rubyvm')();
 let { log } = require('../libc')();
 
+let leave = function() {
+  let val_p = vm.TOPN(0);
+  let val_inspect = r.rb_inspect2(val_p);
+  log(">> objtostring -> " + val_inspect);
+};
+
 module.exports = function(args) {
-  // /* empty current stack */
-  // adjuststack
-  // (rb_num_t n)
-  // (...)
-  // (...)
-  // // attr rb_snum_t sp_inc = -(rb_snum_t)n;
+  // /* Convert object to string using to_s or equivalent. */
+  // objtostring
+  // (CALL_DATA cd)
+  // (VALUE recv)
+  // (VALUE val)
+  // // attr bool leaf = false;
+
+  // ruby 3.0:
+  // 0023 opt_send_without_block                 <calldata!mid:to_s, argc:0, FCALL|ARGS_SIMPLE>
+  // 0025 tostring
+
+  // ruby 3.1:
+  // 0018 objtostring                            <calldata!mid:to_s, argc:0, FCALL|ARGS_SIMPLE>
+  // 0020 anytostring
   try {
-    let n = parseInt(vm.GET_OPERAND(1).toString())
-
-    // let val = vm.TOPN(n)
-
     let sp = vm.GET_SP();
-    let vals = []
-    for (let i=0; i < n+1; i++) {
-      vals.push(r.rb_inspect2(vm.TOPN(i, sp)));
-    }
-    for (let i=0; i < n; i++) {
-      vals[i] = "~" + vals[i] + "~"
-    }
-    let vals_str = "[ " + vals.join(", ") + " ]";
+    let recv = vm.TOPN(0, sp)
 
-    log(">> adjuststack n: " + n + " " + vals_str + " (top->bottom)");
+    let recv_inspect = r.rb_inspect2(recv)
+
+    // if (recv_inspect.startsWith("#")) {
+    //   recv_inspect = "(" + recv_inspect + ")"
+    // }
+
+    log(">> objtostring (" + recv_inspect + ")");
+
+    let orig_sp = sp;
+    vm.last_insn = ["objtostring", orig_sp, /*expected_sp*/ vm.get_expected_sp(+0, orig_sp), /*has_simple*/ true, "to_s", /*check_fn*/ null];
+    vm.return_callback = leave;
   } catch (e) {
-    log("Error [adjuststack]: " + String(e))
+    log("Error [objtostring]: " + String(e))
   }
 }

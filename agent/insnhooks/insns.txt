@@ -21,7 +21,9 @@
 [x] putiseq // removed in 2.7
 [x] putstring
 [x] concatstrings
-[x] tostring
+[x] tostring // renamed in 3.1 to anytostring
+[x] anytostring // "added" in 3.1
+[x] objtostring // added in 3.1
 [x] freezestring // removed in 3.0
 [x] toregexp
 [x] intern
@@ -38,7 +40,7 @@
 [x] dup
 [x] dupn
 [x] swap
-[x] reverse
+[x] reverse // removed in 3.1, looks like they use newarray+expandarray to do the same thing
 [x] reput // DEFINE_INSN_IF(STACK_CACHING) from ruby 2.7
 [x] topn
 [x] setn

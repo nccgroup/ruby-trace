@@ -45,6 +45,8 @@ module.exports = function(args) {
   try {
     let cfp = vm.GET_CFP()
     let raw_dst = vm.GET_OPERAND(1, cfp).toString()
+    // ruby 3.0: struct iseq_inline_cache_entry *IC;
+    // ruby 3.1: struct iseq_inline_constant_cache *IC;
     let ic = vm.GET_OPERAND(2, cfp)
 
     let cur_pc = parseInt(vm.GET_PC(cfp).toString())
@@ -52,13 +54,35 @@ module.exports = function(args) {
     let dst_pc = (cur_pc + INSN_ATTR_width) + (dst*Process.pointerSize)
     let dst_str = dst >= 0 ? "+" + dst : dst
 
-    let ic_serial = vm.native.iseq_inline_cache_entry__ic_serial(ic).toNumber()
-    let ic_cref = vm.native.iseq_inline_cache_entry__ic_cref(ic)
+    switch (vm.ruby_version) {
+      case 26:
+      case 27:
+      case 30: {
+        let ic_serial = vm.native.iseq_inline_cache_entry__ic_serial(ic).toNumber()
+        let ic_cref = vm.native.iseq_inline_cache_entry__ic_cref(ic)
 
-    let ic_hit = vm.vm_ic_hit_p(ic_serial, ic_cref, cfp)
-    let res_str = ic_hit ? "taken" : "not taken";
+        let ic_hit = vm.vm_ic_hit_p(ic_serial, ic_cref, cfp)
+        let res_str = ic_hit ? "taken" : "not taken";
 
-    log(">> opt_getinlinecache " + dst_str + " (0x" + cur_pc.toString(16) + "->0x" + dst_pc.toString(16) + "), ic_serial: " + ic_serial + ", ic_cref: @" + ic_cref + "; jump: " + res_str)
+        log(">> opt_getinlinecache " + dst_str + " (0x" + cur_pc.toString(16) + "->0x" + dst_pc.toString(16) + "), ic_serial: " + ic_serial + ", ic_cref: @" + ic_cref + "; jump: " + res_str)
+        break;
+      }
+      case 31:
+      default: {
+        let ice = vm.native.iseq_inline_constant_cache__entry(ic);
+        if (ice.isNull()) {
+          log(">> opt_getinlinecache " + dst_str + " (0x" + cur_pc.toString(16) + "->0x" + dst_pc.toString(16) + "), ic->entry: null; jump: not taken")
+        } else {
+          let ic_serial = vm.native.iseq_inline_constant_cache__ic_serial(ic).toNumber()
+          let ic_cref = vm.native.iseq_inline_constant_cache__ic_cref(ic)
+
+          let ic_hit = vm.vm_ic_hit_p(ic_serial, ic_cref, cfp)
+          let res_str = ic_hit ? "taken" : "not taken";
+          log(">> opt_getinlinecache " + dst_str + " (0x" + cur_pc.toString(16) + "->0x" + dst_pc.toString(16) + "), ic_serial: " + ic_serial + ", ic_cref: @" + ic_cref + "; jump: " + res_str)
+        }
+      }
+    }
+
     vm.return_callback = leave;
   } catch (e) {
     log("Error [opt_getinlinecache]: " + String(e))

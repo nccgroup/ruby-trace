@@ -36,8 +36,15 @@ let leave = function() {
 
 module.exports = function(args) {
   // /* Get value of class variable id of klass as val. */
+  // ruby 2.6-3.0
   // getclassvariable
   // (ID id)
+  // ()
+  // (VALUE val)
+
+  // ruby 3.1
+  // getclassvariable
+  // (ID id, IVC ic)
   // ()
   // (VALUE val)
   try {
@@ -47,7 +54,19 @@ module.exports = function(args) {
     let ep_p = vm.GET_EP();
     let cref_p = vm.vm_env_cref(ep_p)
 
-    let klass = vm.native.rb_cref_t__klass(cref_p);
+    let klass = null;
+    switch (vm.ruby_version) {
+      case 26:
+      case 27:
+      case 30: {
+        klass = vm.native.rb_cref_t__klass(cref_p);
+        break;
+      }
+      case 31:
+      default: {
+        klass = vm.native.rb_cref_t__klass_or_self(cref_p);
+      }
+    }
     let klass_inspect = r.rb_inspect2(klass);
 
     log(">> getclassvariable :" + id_str + " {" + klass_inspect + "}");
