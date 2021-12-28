@@ -22,38 +22,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+a = "2"
+x = "4#{a}"
+
+def test(v)
+  #puts v.inspect
+  case v
+  in {foo: val}
+    val
+  in [ "foo", val ]
+    val
+  else
+    "?"
+  end
 end
 
-code = 'a = "2"' + "\n" + 'x = "4#{a}"'
+y = test({ :foo => "bar" })
+z = test([ "foo", "bar" ])
 
-code += "\n#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  def test(v)
-    puts v.inspect
-    case v
-    in {foo: val}
-      val
-    in [ "foo", val ]
-      val
-    else
-      "?"
-    end
-  end
-
-  y = test({ :foo => "bar" })
-  z = test([ "foo", "bar" ])
-
-  [x, y, z]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[x, y, z]

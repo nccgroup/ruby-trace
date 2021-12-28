@@ -22,38 +22,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
-
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  puts "a" + "b"
-  puts 1 - 2
-  puts "a" * 5
-  puts "a".__send__(:*, 5)
-  puts "a".*(5)
-  puts 4 / 2
-  puts 5 % 2
-  puts 1 == 1
-  puts 1 != 2
-  puts 5 < 10
-  puts 6 <= 10
-  puts 7 > 10
-  puts 8 >= 10
-  puts [1] << 2
-  puts 1 & 2
-  puts 1 | 2
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-trace {
-  iseq.eval
-}
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[
+  "a" + "b",
+  1 - 2,
+  "a" * 5,
+  "a".__send__(:*, 5),
+  "a".*(5),
+  4 / 2,
+  5 % 2,
+  1 == 1,
+  1 != 2,
+  5 < 10,
+  6 <= 10,
+  7 > 10,
+  8 >= 10,
+  [1] << 2,
+  1 & 2,
+  1 | 2
+]

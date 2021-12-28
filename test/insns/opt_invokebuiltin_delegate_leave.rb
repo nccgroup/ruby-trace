@@ -22,29 +22,33 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
+#note: opt_invokebuiltin_delegate_leave is used to call builtins
+#      however, there is some magic in ruby where opt_invokebuiltin_delegate is
+#      used in place of opt_invokebuiltin_delegate_leave when actually
+#      executing if TracePoint is enabled. so to get around this, we use a
+#      custom trigger symbol to enable ruby-trace tracing, obj_to_enum, which
+#      Kernel#to_enum is mapped to.
+#
+#      ruby-trace -s obj_to_enum -- ruby opt_invokebuiltin_delegate_leave.rb 
 
 U = "\x00".method(:unpack)
-puts U.inspect
 is = RubyVM::InstructionSequence.of(U)
-puts is.disasm
+STDERR.puts is.disasm
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  a = "\\x00".unpack('C')
-  b = "\\x00".method(:unpack).call('C')
-  c = U.call('C')
-  [a, b]
-end;
+D = GC.method(:disable)
+is2 = RubyVM::InstructionSequence.of(D)
+STDERR.puts is2.disasm
 
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+########
 
-puts (trace { iseq.eval }).inspect
+t = TracePoint.new(:call) { |tp| }
+x = "".to_enum
+
+a = "\\x00".unpack('C')
+b = "\\x00".method(:unpack).call('C')
+c = U.call('C')
+GC.disable
+
+t.disable
+puts [a, b, c].inspect
+

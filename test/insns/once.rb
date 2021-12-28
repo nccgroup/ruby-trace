@@ -22,23 +22,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
-
-code = '
+O = []
 
 def alpha
-  puts "alpha() called"
+  O.append("alpha() called")
   "A-Za-z"
 end
 
 def alpha2
-  puts "alpha2() called"
+  O.append("alpha2() called")
   "A-Za-z"
 end
 
@@ -62,11 +54,4 @@ def bar
   ret
 end
 
-[foo, bar]
-'
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+[O, foo, bar]

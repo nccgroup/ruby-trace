@@ -22,39 +22,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
-
-mytracepoint2 = TracePoint.new(:call) { |tp| }
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  begin
-    fiber = Fiber.new do
-      Fiber.yield "a" + "b"
-      "c"
-    end
-    a = fiber.resume
-    b = fiber.resume
-    c = begin
-      fiber.resume
-    rescue =>e
-      e
-    end
-    [a, b, c]
-  rescue =>e
-    e.inspect
+begin
+  fiber = Fiber.new do
+    Fiber.yield "a" + "b"
+    "c"
   end
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-mytracepoint2.enable
-#puts (trace { iseq.eval }).inspect
-puts(iseq.eval.inspect)
+  a = fiber.resume
+  b = fiber.resume
+  c = begin
+    fiber.resume
+  rescue =>e
+    e
+  end
+  [a, b, c]
+rescue =>e
+  e.inspect
+end

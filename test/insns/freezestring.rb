@@ -22,22 +22,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
+########
 
-code = '# frozen_string_literal: true' +
-       "\n" +
-       'puts proc { "#{39+3}".frozen? }.call'
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-trace {
-  iseq.eval
-}
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+# frozen_string_literal: true
+proc { "#{39+3}".frozen? }.call

@@ -22,33 +22,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+def test
+  proc do
+    if 1+1 == 1
+      return 3
+    else
+      return "yolo"
+    end
+    5
+  end.call
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  def test
-    proc do
-      if 1+1 == 1
-        return 3
-      else
-        return "yolo"
-      end
-      5
-    end.call
-  end
-
-  [test]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[test]

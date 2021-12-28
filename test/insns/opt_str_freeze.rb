@@ -22,33 +22,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+a = 'foo'.freeze.object_id.to_s
+b = 'foo'.freeze.object_id.to_s
+
+class String
+  def freeze
+    "bar"
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  puts 'foo'.freeze.object_id.to_s
-  puts 'foo'.freeze.object_id.to_s
+c = 'foo2'.freeze
+d = 'foo2'.freeze
 
-  class String
-    def freeze
-      "bar"
-    end
-  end
-
-  puts 'foo2'.freeze
-  puts 'foo2'.freeze
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-trace {
-  iseq.eval
-}
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[a, b, c, d]

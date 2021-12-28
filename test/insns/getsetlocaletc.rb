@@ -23,21 +23,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-def start_trace
-  trace = TracePoint.new(:call) { |tp| }
-  trace.enable
-  yield
-ensure
-  trace.disable
-end
-
 def block_yield
   yield
 end
 
 def block_pass &b
-  puts b.to_s
-  block_yield(&b)
+  [b.to_s, block_yield(&b)]
 end
 
 def f(&b)
@@ -56,7 +47,7 @@ module Foo
     begin
       a = y
     end
-    puts "a: #{a}"
+    o1 = "a: #{a}"
 
     #[1, 2, 3].each do |n|
     #  puts "Number #{n}"
@@ -70,17 +61,12 @@ module Foo
       end
     end
     pr.call
-    puts "a: #{a}"
+    o2 = "a: #{a}"
 
-    block_pass{}
-    puts f { 1 }
+    o3 = block_pass{}
+    o4 = f { 1 }
+    [o1, o2, o3, o4]
   end
 end
 
-start_trace { 
-  Foo::foo()
-}
-
-puts RubyVM::InstructionSequence.disasm(Foo.method(:foo))
-puts RubyVM::InstructionSequence.disasm(method(:block_pass))
-puts RubyVM::InstructionSequence.disasm(method(:f))
+Foo::foo()

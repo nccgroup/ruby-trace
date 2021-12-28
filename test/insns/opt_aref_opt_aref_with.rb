@@ -22,46 +22,28 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+hash = { 1 => 2 }
+arr = [ 1, 2, 3 ]
+
+obj = Object.new
+def obj.[](h, v=-1)
+  if h.instance_of? String
+    [h + v.to_s]
+  else
+    [h + v]
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  hash = { 1 => 2 }
-  arr = [ 1, 2, 3 ]
-
-  obj = Object.new
-  def obj.[](h, v=-1)
-    if h.instance_of? String
-      [h + v.to_s]
-    else
-      [h + v]
-    end
+block = proc { |h|
+  case h
+  when Hash
+    h[41]
+  else
+    [h[41], "h"[42], (h["43"] rescue nil), h[44.0], h[45, 1]]
   end
+}
 
-
-  block = proc { |h|
-    case h
-    when Hash
-      h[41]
-    else
-      [h[41], "h"[42], (h["43"] rescue nil), h[44.0], h[45, 1]]
-    end
-  }
-
-  a = block.call(hash)
-  b = block.call(arr)
-  c = block.call(obj)
-  [a, b, c]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+a = block.call(hash)
+b = block.call(arr)
+c = block.call(obj)
+[a, b, c]

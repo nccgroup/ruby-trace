@@ -22,48 +22,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
+r = method(:require)
 
+a = require 'json'
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  r = method(:require)
-  puts r
+b = require 'json'
 
-  a = require 'json'
+c = require 'bigdecimal'
 
-  b = require 'json'
+d = r.call 'bigdecimal'
 
-  c = require 'bigdecimal'
+e = gem_original_require 'bigdecimal'
 
-  d = r.call 'bigdecimal'
+f = require 'json'
 
-  e = gem_original_require 'bigdecimal'
+g = require 'zlib'
 
-  f = require 'json'
+h = require 'json'
 
-  g = require 'zlib'
-
-  h = require 'json'
-
-  [a, b, c, d, e, f, g, h]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-begin
-  puts (trace { iseq.eval }).inspect
-#rescue =>e
-#  puts e.inspect
-#  puts e.backtrace.join("\n")
-end
-
-#puts (iseq.eval).inspect
+[r, a, b, c, d, e, f, g, h]

@@ -22,71 +22,55 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+#note: opt_regexpmatch1 was removed in 2.7
+
+r1 = /true/
+
+r2 = /true/.dup
+def r2.=~(obj)
+  puts "r2.=~"
+  nil
+end  
+
+r3 = /true/.dup
+def r3.!(obj)
+  nil
+end  
+
+a = /true/ =~ 'true'
+b = 'true' =~ /true/
+c = 5 =~ /5/
+d = Object.new =~ /Object/
+
+e = r1 =~ 'true'
+f = 'true' =~ r1
+
+g = r2 =~ 'truetrue'
+h = 'truetrue' =~ r2
+
+i = r3 =~ 'falsefalse'
+j = 'falsefalse' =~ r3
+
+class String
+  def =~(obj)
+    puts "String.=~"
+    nil
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  r1 = /true/
+k = 'true' =~ r1
 
-  r2 = /true/.dup
-  def r2.=~(obj)
-    puts "r2.=~"
+l = /true/ =~ 'true'
+m = 'true' =~ /true/
+
+class Regexp
+  def =~(obj)
+    puts "Regexp.=~"
     nil
-  end  
-
-  r3 = /true/.dup
-  def r3.!(obj)
-    nil
-  end  
-
-  a = /true/ =~ 'true'
-  b = 'true' =~ /true/
-  c = 5 =~ /5/
-  d = Object.new =~ /Object/
-
-  e = r1 =~ 'true'
-  f = 'true' =~ r1
-
-  g = r2 =~ 'truetrue'
-  h = 'truetrue' =~ r2
-
-  i = r3 =~ 'falsefalse'
-  j = 'falsefalse' =~ r3
-
-  class String
-    def =~(obj)
-      puts "String.=~"
-      nil
-    end
   end
+end
 
-  k = 'true' =~ r1
+n = /true/ =~ 'true'
+o = 'true' =~ /true/
 
-  l = /true/ =~ 'true'
-  m = 'true' =~ /true/
-
-  class Regexp
-    def =~(obj)
-      puts "Regexp.=~"
-      nil
-    end
-  end
-
-  n = /true/ =~ 'true'
-  o = 'true' =~ /true/
-
-
-  [a, b, c, d, e, f, g, h, i, j, k, l, m, n, o]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+[a, b, c, d, e, f, g, h, i, j, k, l, m, n, o]

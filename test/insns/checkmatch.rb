@@ -22,57 +22,40 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+a = ["hello", "world", "!"]
+arr = [0, 1, 2]
+
+w = case a[0]
+when 0..20
+  "0"
+when /hello2/
+  "1"
+when "world"
+  "2"
+when *arr
+  "wat2"
+else
+  "3"
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  a = ["hello", "world", "!"]
-  arr = [0, 1, 2]
+x = case
+when 1, 2, *[]
+  "a"
+else
+  "b"
+end
 
-  w = case a[0]
-  when 0..20
-    "0"
-  when /hello2/
-    "1"
-  when "world"
-    "2"
-  when *arr
-    "wat2"
-  else
-    "3"
-  end
+y = begin
+  raise Exception.new "foo"
+rescue Exception => e
+  e
+end
 
-  x = case
-  when 1, 2, *[]
-    "a"
-  else
-    "b"
-  end
+z = case a
+in ["hello", v, "!"]
+  v
+else
+  "miss"
+end
 
-  y = begin
-    raise Exception.new "foo"
-  rescue Exception => e
-    e
-  end
-
-  z = case a
-  in ["hello", v, "!"]
-    v
-  else
-    "miss"
-  end
-
-  [w, x, y, z]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[w, x, y, z]

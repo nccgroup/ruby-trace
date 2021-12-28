@@ -22,22 +22,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
+#note: opt_regexpmatch1 was removed in 2.7
 
-code = 'puts /(#{"tr" + "ue"})[#{"a-z" + "A-Z" + "0-9"}]*/neimx =~ "true"' +
-       "\n" +
-       "puts /true/ =~ 'true'"
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-trace {
-  iseq.eval
-}
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+a = /(#{"tr" + "ue"})[#{"a-z" + "A-Z" + "0-9"}]*/neimx =~ "true"
+b = /true/ =~ 'true'
+[a, b]

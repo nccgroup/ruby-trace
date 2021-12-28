@@ -22,37 +22,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+a = 'foo' + 'bar'
+
+b = 'foo2'
+def b.+(obj)
+  "wat"
+end
+b = b + "bar2"
+
+class String
+  def +(obj)
+    "WAT"
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  a = 'foo' + 'bar'
+c = 'foo3' + 'bar3'
 
-  b = 'foo2'
-  def b.+(obj)
-    "wat"
-  end
-  b = b + "bar2"
-
-  class String
-    def +(obj)
-      "WAT"
-    end
-  end
-
-  c = 'foo3' + 'bar3'
-
-  [a, b, c]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[a, b, c]

@@ -22,43 +22,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+n1 = 0
+n2 = false
+n3 = nil
+n4 = []
+n5 = []
+n6 = Object.new
+def n5.!
+  true
+end
+def n6.!
+  self
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  n1 = 0
-  n2 = false
-  n3 = nil
-  n4 = []
-  n5 = []
-  n6 = Object.new
-  def n5.!
-    #puts "n5.!"
-    true
-  end
-  def n6.!
-    #puts "n6.!"
-    self
-  end
+a = !!n1
+b = !!n2
+c = !!n3
+d = !!n4
+e = !!n5
+f = !!n6
 
-  a = !!n1
-  b = !!n2
-  c = !!n3
-  d = !!n4
-  e = !!n5
-  f = !!n6
-
-  [a, b, c, d, e, f]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+[a, b, c, d, e, f]

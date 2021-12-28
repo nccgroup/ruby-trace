@@ -22,38 +22,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
+#module Primitive
+#  def self.gc_disable
+#  end
+#end
 
-puts RubyVM::InstructionSequence.disasm(GC.method(:disable))
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  #module Primitive
-  #  def self.gc_disable
-  #  end
-  #end
+#def test
+#  Primitive.gc_disable
+#  #__builtin_gc_disable
+#end
 
-  #def test
-  #  Primitive.gc_disable
-  #  #__builtin_gc_disable
-  #end
-
-  w = GC.disable
-  x = GC.disable
-  #x = Primitive.gc_disable # GC.disable
-  #x = test
-  y = GC.enable
-  z = GC.enable
-  [w,x,y,z]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+w = GC.disable
+x = GC.disable
+#x = Primitive.gc_disable # GC.disable
+#x = test
+y = GC.enable
+z = GC.enable
+[w,x,y,z]

@@ -31,32 +31,23 @@ ensure
 end
 
 # is array, else path, enough
-code = 'a = [ 1, 2, nil ]; x,y, = a; x+y'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+a1 = [ 1, 2, nil ]; x1,y1, = a1;
+o1 = x1+y1
 
 # is array, else path, not enough
-code = 'a = [ 1, 2 ]; w,x,y,z = a; z'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+a2 = [ 1, 2 ]; w2,x2,y2,z2 = a2;
+o2 = z2
 
 # not array, else path, not enough
-code = 'a = 5; x,y = a; x'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+a3 = 5; x3,y3 = a3;
+o3 = x3
 
 # is array (heap), else path, enough
-code = 'a = [5,2,3,4,5,6,7,8]; x,y,*z = a; z'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+a4 = [5,2,3,4,5,6,7,8]; x4,y4,*z4 = a4;
+o4 = z4
 
+# is array (heap), postarg path, enough ; implemented with 2 expandarray insns
+a5 = [1,2,3,4,5,6,7,"88888888888",9]; b5, c5, *r5, p15, p25, p35 = a5;
+o5 = [b5, c5, r5, p15, p25, p35]
 
-## is array (heap), postarg path, enough ; implemented with 2 expandarray insns
-code = 'a = [1,2,3,4,5,6,7,"88888888888",9]; b, c, *r, p1, p2, p3 = a; [b, c, r, p1, p2, p3]'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+[o1, o2, o3, o4, o5]

@@ -22,34 +22,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
+x = 1.times.map {
+  def aaaa
+    'aaaa'
+  end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  x = 1.times.map {
-    def aaaa
-      'aaaa'
-    end
+  alias :bbbb :aaaa
 
-    alias :bbbb :aaaa
-
-    bbbb
-  }.join
-  puts x.class.to_s
-  x += " yolo"
-  puts x
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-trace {
-  iseq.eval
-}
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+  bbbb
+}.join
+y = x.class.to_s
+x += " yolo"
+[x, y]

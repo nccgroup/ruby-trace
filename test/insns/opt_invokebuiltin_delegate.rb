@@ -22,27 +22,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
+#note: opt_invokebuiltin_delegate_leave is normally used to call builtins
+#      however, there is some magic in ruby where opt_invokebuiltin_delegate is
+#      used in place of opt_invokebuiltin_delegate_leave when actually
+#      executing if TracePoint is enabled. as we use TracePoint as a trigger,
+#      this means that by default, opt_invokebuiltin_delegate ends up being
+#      used for builtins under ruby-trace.
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  GC.disable
+U = "\x00".method(:unpack)
+is = RubyVM::InstructionSequence.of(U)
 
-  TracePoint.new(:return) do |tp|
-    p [tp.event, tp.method_id]
-  end.enable do
-    "\x00".unpack("c")
-  end
-end;
+D = GC.method(:disable)
+is2 = RubyVM::InstructionSequence.of(D)
+[is, is2]
 
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+########
 
-puts (trace { iseq.eval }).inspect
+a = "\\x00".unpack('C')
+b = "\\x00".method(:unpack).call('C')
+c = U.call('C')
+GC.disable
+[a, b, c]

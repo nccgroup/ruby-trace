@@ -22,19 +22,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
-def start_trace
-  trace = TracePoint.new(:call) { |tp| }
-  trace.enable
-  yield
-ensure
-  trace.disable
-end
-
 def foo
-  puts $~
-  puts $9
-  puts $20
+  a = $~
+  b = $9
+  c = $20
 
   #if nil.nil?..nil.nil?
   #  puts "true"
@@ -52,33 +43,30 @@ def foo
   #end
   #puts selected
 
-  if (true)..(false)
-    puts "test1"
+  d = if (true)..(false)
+    "test1"
   end
 
-  if (true)..(false)
-    puts "test2"
+  e = if (true)..(false)
+    "test2"
   end
 
-  if (true)...(false)
-    puts "test3"
+  f = if (true)...(false)
+    "test3"
   end
 
-  true if nil.nil?..nil.nil?
+  g = true if nil.nil?..nil.nil?
 
-  puts $`
+  h = $`
 
   $_ = "foo"
-  puts $_
+  i = $_
 
-  /s(\w{2}).*(c)/.match('haystack')
-  m = $~
-  $~ = m
-  puts $~
+  j = /s(\w{2}).*(c)/.match('haystack')
+  _m = $~
+  $~ = _m
+  k = $~
+  [a,b,c,d,e,f,g,h,i,j,k]
 end
 
-puts RubyVM::InstructionSequence.disasm(method(:foo))
-
-start_trace { 
-  foo()
-}
+foo()

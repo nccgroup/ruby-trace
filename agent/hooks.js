@@ -1755,13 +1755,17 @@ function return_callback_wrapper(func, insn) {
 }
 
 class Hooks {
-  constructor () {
+  constructor (parameters) {
     this.tracer_interceptors = {}
     this.is_tracing = false;
     this.cfunc_hooks = {};
     this.cfunc_hooks_metadatas = {}
     r.hooks = this;
     this.gc_status = null;
+    this.trace_symbols = [];
+    if (parameters.traceSymbols !== undefined) {
+      this.trace_symbols = parameters.traceSymbols.split(",");
+    }
 
     // enable/disable hooks
     let self = this;
@@ -1808,7 +1812,19 @@ class Hooks {
         }
       });
     }
-    
+
+    for (let s of this.trace_symbols) {
+      Interceptor.attach(r.sym_to_addr_map[s].address, {
+        onLeave: function(retval) {
+          try {
+            self.trace()
+          } catch(e) {
+            log("Error [" + s + "]: " + String(e))
+          }
+        }
+      });
+    }
+
     for (let s of ['rb_tracepoint_disable']) {
       Interceptor.attach(r.libruby.getExportByName(s), function(args) {
         try {
@@ -2354,9 +2370,9 @@ class Hooks {
 
 let singleton = null;
 
-module.exports = function () {
+module.exports = function (parameters) {
   if (singleton === null) {
-    singleton = new Hooks();
+    singleton = new Hooks(parameters);
   }
 
   return singleton;

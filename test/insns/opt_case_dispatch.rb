@@ -22,50 +22,38 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
-
 require 'bigdecimal'
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  def foo(x)
-    case x
-    when 'hello'
-      'world'
-    when 1
-      "num"
-    when 2147483648
-      "bignum"
-    when 3.0
-      "float"
-    when true
-      "bool"
-    when nil
-      "nil"
-    when "foo"
-      "string"
-    when :foo
-      "symbol"
-    else
-      "not found: " + x
-    end
-  end
-  a = [foo('hello'), foo(1), foo(2.0 + 1.0), foo(BigDecimal("3.0")), foo('wat'), foo(:foo), foo("foo"), foo(2147483648)]
+########
 
-  class Symbol
-    undef ===
-    def ===(*args)
-      true
-    end
+def foo(x)
+  case x
+  when 'hello'
+    'world'
+  when 1
+    "num"
+  when 2147483648
+    "bignum"
+  when 3.0
+    "float"
+  when true
+    "bool"
+  when nil
+    "nil"
+  when "foo"
+    "string"
+  when :foo
+    "symbol"
+  else
+    "not found: " + x
   end
-  [a, [foo('hello'), foo(1), foo(2.0 + 1.0), foo(BigDecimal("3.0")), foo('wat'), foo(:foo), foo("foo"), foo(2147483648)]]
-end;
+end
+a = [foo('hello'), foo(1), foo(2.0 + 1.0), foo(BigDecimal("3.0")), foo('wat'), foo(:foo), foo("foo"), foo(2147483648)]
 
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
+class Symbol
+  undef ===
+  def ===(*args)
+    true
+  end
+end
+[a, [foo('hello'), foo(1), foo(2.0 + 1.0), foo(BigDecimal("3.0")), foo('wat'), foo(:foo), foo("foo"), foo(2147483648)]]

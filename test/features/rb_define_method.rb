@@ -22,47 +22,26 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
+# 0
+a = "aaaaaaa"
+a = a.length
+# 1
+b = "bbbbbbb"
+b1 = b === "b"
+b2 = b === "b2"
+b = b2
 
-mytracepoint2 = TracePoint.new(:call) { |tp| }
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
+# 2
+c = "ccccccc"
+c.insert(2, "_")
 
-  # 0
-  a = "aaaaaaa"
-  a = a.length
-  # 1
-  b = "bbbbbbb"
-  b1 = b === "b"
-  b2 = b === "b2"
-  b = b2
+# -1
+d = "abcddcba"
+d = [d.rindex("b"), d.rindex("b", 4)]
 
-  # 2
-  c = "ccccccc"
-  c.insert(2, "_")
-
-  # -1
-  d = "abcddcba"
-  d = [d.rindex("b"), d.rindex("b", 4)]
-
-  # -2
-  enum = Enumerator.new { |y|
-    [y, y.yield("c", "d")]
-  }
-  e = enum.to_a
-  [a, b, c, d, e]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-mytracepoint2.enable
-#puts (trace { iseq.eval }).inspect
-puts(iseq.eval.inspect)
+# -2
+enum = Enumerator.new { |y|
+  [y, y.yield("c", "d")]
+}
+e = enum.to_a
+[a, b, c, d, e]

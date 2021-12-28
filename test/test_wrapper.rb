@@ -30,37 +30,25 @@ ensure
   t.disable
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  a = 1
-  b = 2
-  c = 3
-  d = 4
+code = File.read(ARGV[0])
 
-  puts a
-  puts b
-  puts c
-  puts d
+prelude, code = code.split("########")
+if code == nil
+  code = prelude
+  prelude = ""
+end
 
-#  puts d
-#  puts c
-#  puts b
-#  puts a
-end;
+pre = eval(prelude)
+if pre.class == RubyVM::InstructionSequence
+  STDERR.puts pre.disasm
+elsif pre.class == [].class && pre.length > 0 && pre[0].class == RubyVM::InstructionSequence
+  pre.each{ |is|
+    STDERR.puts is.disasm
+  }
+end
 
 iseq = RubyVM::InstructionSequence.compile(code)
 
-trace {
-  #a = 1
-  #b = 2
-  #c = 3
-  #d = 4
+puts "result: " + (trace { iseq.eval }).inspect
 
-  #puts a
-  #puts b
-  #puts c
-  #puts d
-  iseq.eval
-}
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+STDERR.puts RubyVM::InstructionSequence.disasm(iseq)

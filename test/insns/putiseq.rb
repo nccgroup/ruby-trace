@@ -22,30 +22,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# putiseq was removed in ruby 2.7
+#note: putiseq was removed in ruby 2.7
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
-
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  puts 2.times.map {
-    def method_definition
-      'hello'
-    end
-    method_definition
-  }.join
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-trace {
-  iseq.eval
+2.times.map {
+  def method_definition
+    'hello'
+  end
+  method_definition
 }
-
-puts RubyVM::InstructionSequence.disasm(iseq)

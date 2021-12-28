@@ -22,29 +22,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+#note: relies on 2.7+ syntax/features
+
+a = ["hello", "world", "!"]
+case a
+in ["hello", v, "!"]
+  v
+else
+  "miss"
 end
-
-#code = 'a = {}; a["true"] = "foo"'
-
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  a = ["hello", "world", "!"]
-  case a
-  in ["hello", v, "!"]
-    v
-  else
-    "miss"
-  end
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)

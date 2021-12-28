@@ -22,115 +22,98 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+class A
+  def aaa(a, b, c)
+    a + b + c + "1"
+  end
+  class AA
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  class A
-    def aaa(a, b, c)
-      a + b + c + "1"
-    end
-    class AA
-    end
+class A
+  def aaa(a, b, c)
+    a + b + c + "2"
+  end
+end
+
+class ::B < A
+  def bbb(b, c, d)
+    b + c + d
+  end
+end
+
+class C < B
+  def aaa(a, b, c, d)
+    super(a, b, c) + d
   end
 
-  class A
-    def aaa(a, b, c)
-      a + b + c + "2"
-    end
+  def ccc(c, d)
+    c + d
   end
+end
 
-  class ::B < A
-    def bbb(b, c, d)
-      b + c + d
-    end
+class C
+  def ccc(c, d)
+    c + d + "2"
   end
+end
 
-  class C < B
-    def aaa(a, b, c, d)
-      super(a, b, c) + d
-    end
+c3 = C.new
+def c3.ccc(c, d)
+  c + d + "3"
+end
 
-    def ccc(c, d)
-      c + d
-    end
+c4 = C.new
+class << c4
+  def ccc(c, d)
+    c + d + "4"
   end
+end
 
-  class C
-    def ccc(c, d)
-      c + d + "2"
-    end
+class D
+  def foo
   end
-
-  c3 = C.new
-  def c3.ccc(c, d)
-    c + d + "3"
+end
+Object.send(:remove_const, :D)
+class D
+  def ddd(d)
+    d + "2"
   end
+end
 
-  c4 = C.new
-  class << c4
-    def ccc(c, d)
-      c + d + "4"
-    end
+
+module E
+  def eee(e)
+    e + "1"
   end
+end
 
-  class D
-    def foo
-    end
+module ::F
+  def F.fff(f)
+    f + "2"
   end
-  Object.send(:remove_const, :D)
-  class D
-    def ddd(d)
-      d + "2"
-    end
-  end
+  include E
+end
 
+class ::G
+  include E
+end
 
-  module E
-    def eee(e)
-      e + "1"
-    end
-  end
+class H
+  include F
+end
 
-  module ::F
-    def F.fff(f)
-      f + "2"
-    end
-    include E
-  end
-
-  class ::G
-    include E
-  end
-
-  class H
-    include F
-  end
-
-  [
-    A.new.aaa("a", "b", "c"),
-    B.new.aaa("a", "b", "c"),
-    B.new.bbb("b", "c", "d"),
-    C.new.aaa("a", "b", "c", "d"),
-    C.new.bbb("b", "c", "d"),
-    C.new.ccc("c", "d"),
-    c3.ccc("c", "d"),
-    c4.ccc("c", "d"),
-    D.new.ddd("d"),
-    F.fff("f"),
-    G.new.eee("e"),
-    H.new.eee("e"),
-  ]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[
+  A.new.aaa("a", "b", "c"),
+  B.new.aaa("a", "b", "c"),
+  B.new.bbb("b", "c", "d"),
+  C.new.aaa("a", "b", "c", "d"),
+  C.new.bbb("b", "c", "d"),
+  C.new.ccc("c", "d"),
+  c3.ccc("c", "d"),
+  c4.ccc("c", "d"),
+  D.new.ddd("d"),
+  F.fff("f"),
+  G.new.eee("e"),
+  H.new.eee("e"),
+]

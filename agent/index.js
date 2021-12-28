@@ -72,7 +72,7 @@ function setup(parameters) {
   //      runtime_init tied to ruby_run_node.
   let r = require('./ruby')(libruby)
   let vm = require('./rubyvm')(function() {
-    require('./hooks')()
+    require('./hooks')(parameters)
   })
 
   let main = null;

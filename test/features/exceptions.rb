@@ -22,76 +22,58 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+def test1
+  begin
+    raise "foo"
+  rescue =>e
+    [e,
+      e.instance_variables,
+      #e.instance_variable_get(:cause),
+      e.cause
+    ]
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  def test1
-    begin
-      raise "foo"
-    rescue =>e
-      [e,
-       e.instance_variables,
-       #e.instance_variable_get(:cause),
-       e.cause
-      ]
+def test2b
+  begin
+    raise "foo"
+  rescue =>e
+    raise "bar"
+  end
+end
+
+def test2
+  begin
+    test2b
+  rescue =>e
+    [e,
+      e.instance_variables,
+      #e.instance_variable_get(:cause),
+      e.cause
+    ]
+  end
+end
+
+def test3
+  catch(:thing) do
+    throw(:thing, "two_fish")
+  end
+end
+
+def test4
+  proc do
+    if 1+1 == 1
+      return 3
+    else
+      return "yolo"
     end
-  end
+    5
+  end.call
+end
 
-  def test2b
-    begin
-      raise "foo"
-    rescue =>e
-      raise "bar"
-    end
-  end
+a = test1
+b = test2
+c = test3
+d = test4
 
-  def test2
-    begin
-      test2b
-    rescue =>e
-      [e,
-       e.instance_variables,
-       #e.instance_variable_get(:cause),
-       e.cause
-      ]
-    end
-  end
-  
-  def test3
-    catch(:thing) do
-      throw(:thing, "two_fish")
-    end
-  end
-
-  def test4
-    proc do
-      if 1+1 == 1
-        return 3
-      else
-        return "yolo"
-      end
-      5
-    end.call
-  end
-
-  a = test1
-  b = test2
-  c = test3
-  d = test4
-
-  [a, b, c, d]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[a, b, c, d]

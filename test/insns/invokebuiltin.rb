@@ -22,22 +22,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
-
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  a = Struct.new(:a).new
-  a.a = "yolo"
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+#note: invokebuiltin is used by Struct internals
+a = Struct.new(:a).new
+a.a = "yolo"
+a

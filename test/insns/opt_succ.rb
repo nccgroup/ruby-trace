@@ -22,35 +22,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+n1 = 1
+n2 = Object.new
+n3 = Object.new
+def n2.succ
+  42
+end
+def n3.succ
+  self
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  n1 = 1
-  n2 = Object.new
-  n3 = Object.new
-  def n2.succ
-    42
-  end
-  def n3.succ
-    self
-  end
+a = n1.succ
+b = n2.succ
+c = n3.succ.succ
 
-  a = n1.succ
-  b = n2.succ
-  c = n3.succ.succ
-
-  [a, b, c]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+[a, b, c]

@@ -22,14 +22,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
-
 class Foo
   def self.foo
     @@foo = 1
@@ -37,8 +29,4 @@ class Foo
   end
 end
 
-puts RubyVM::InstructionSequence.disasm(Foo.method(:foo))
-
-trace {
-  puts Foo.foo
-}
+Foo.foo

@@ -22,20 +22,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
+a1 = 4
+o1 = 2..a1
 
-code = 'a = 4; 2..a'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+a2 = 4
+o2 = 2...a2
 
-code = 'a = 4; 2...a'
-iseq = RubyVM::InstructionSequence.compile(code)
-puts (trace { iseq.eval }).inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+[o1, o2]

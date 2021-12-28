@@ -22,19 +22,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
-end
+#note: reverse was removed in 3.1
 
-
-code = 'q, (w, e), r, t, y = 1, [4, 2], 7, 8, 9; [q, w, e, r, t, y]'
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+q, (w, e), r, t, y = 1, [4, 2], 7, 8, 9;
+[q, w, e, r, t, y]

@@ -22,75 +22,58 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+class A
+  def aaa(a, b, c)
+    a + b + c + "1"
+  end
+
+  def self.saaa(a, b, c)
+    a + b + c + "_s"
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  class A
-    def aaa(a, b, c)
-      a + b + c + "1"
-    end
+def bbb
+end
 
-    def self.saaa(a, b, c)
-      a + b + c + "_s"
-    end
+a2 = A.new
+def a2.aaa(a, b, c)
+  a + b + c + "2"
+end
+
+a3 = A.new
+class << a3
+  def aaa(a, b, c)
+    a + b + c + "3"
   end
+end
 
-  def bbb
+module E
+  def eee(e)
+    e + "1"
   end
+end
 
-  a2 = A.new
-  def a2.aaa(a, b, c)
-    a + b + c + "2"
+module ::F
+  def F.fff(f)
+    f + "2"
   end
+  include E
+end
 
-  a3 = A.new
-  class << a3
-    def aaa(a, b, c)
-      a + b + c + "3"
-    end
-  end
+class ::G
+  include E
+end
 
-  module E
-    def eee(e)
-      e + "1"
-    end
-  end
+class H
+  include F
+end
 
-  module ::F
-    def F.fff(f)
-      f + "2"
-    end
-    include E
-  end
-
-  class ::G
-    include E
-  end
-
-  class H
-    include F
-  end
-
-  [
-    A.new.aaa("a", "b", "c"),
-    A.saaa("a", "b", "c"),
-    a2.aaa("a", "b", "c"),
-    a3.aaa("a", "b", "c"),
-    F.fff("f"),
-    G.new.eee("e"),
-    H.new.eee("e"),
-  ]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-
-puts (trace { iseq.eval }).inspect
-
-puts RubyVM::InstructionSequence.disasm(iseq)
+[
+  A.new.aaa("a", "b", "c"),
+  A.saaa("a", "b", "c"),
+  a2.aaa("a", "b", "c"),
+  a3.aaa("a", "b", "c"),
+  F.fff("f"),
+  G.new.eee("e"),
+  H.new.eee("e"),
+]

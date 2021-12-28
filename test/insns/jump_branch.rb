@@ -22,44 +22,26 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+a = false
+1 + 1 while a
+
+a = true
+b = if a
+  1
+else
+  2
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
+a = 2
+a&.+(1)
 
-  a = false
-  1 + 1 while a
-
-  a = true
-  b = if a
-    1
-  else
-    2
+c = true
+c = while c
+  if c
+    c = false
+    redo
   end
+  break 42
+end
 
-  a = 2
-  a&.+(1)
-
-  c = true
-  c = while c
-    if c
-      c = false
-      redo
-    end
-    break 42
-  end
-
-  [a, b, c]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+[a, b, c]

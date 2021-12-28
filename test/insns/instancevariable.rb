@@ -22,21 +22,43 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+
+class Foo
+  def initialize(a)
+    @a = a
+  end
+
+  def bar
+    @a
+  end
+
+  def set(a)
+    @a = a
+  end
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  Class.inspect
-end;
+f = Foo.new("hello")
 
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
+a = f.method(:bar)
 
-puts (trace { iseq.eval }).inspect
+b = f.bar
+c = f.instance_variable_get "@a"
+d = f.instance_variable_get :@a
+
+e = f.instance_variable_set "@a", "wat"
+g = f.bar
+h = f.instance_variable_get "@a"
+i = f.instance_variable_get :@a
+
+j = f.instance_variable_set :@a, "yolo"
+k = f.bar
+l = f.instance_variable_get "@a"
+m = f.instance_variable_get :@a
+
+n = f.instance_variable_set :@a, "yolo"
+o = f.bar
+p = f.instance_variable_get "@a"
+q = f.instance_variable_get :@a
+
+
+[f, a, [b, c, d], [e, g, h, i], [j, k, l, m], [n, o, p, q]]

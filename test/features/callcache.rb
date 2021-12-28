@@ -22,42 +22,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+class A
+  def baz; end
 end
 
-#z = "zzzzzz"
-#z === "z"
+class B
+  def baz; end
+end
 
-mytracepoint2 = TracePoint.new(:call) { |tp| }
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  class A
-    def baz; end
-  end
+def foo(bar)
+  bar.baz
+end
 
-  class B
-    def baz; end
-  end
-
-  def foo(bar)
-    bar.baz
-  end
-
-  2.times do
-    foo(A.new)
-    foo(B.new)
-  end
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-mytracepoint2.enable
-#puts (trace { iseq.eval }).inspect
-puts(iseq.eval.inspect)
+2.times.map do
+  foo(A.new)
+  foo(B.new)
+end

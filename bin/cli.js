@@ -46,7 +46,8 @@ async function main() {
   program
     .version(version)
     .usage('[options] -- <ruby> [args...] ')
-    .option('-o, --output <logfile>', 'File path for logging output')
+    //.option('-o, --output <logfile>', 'File path for logging output')
+    .option('-s, --trace-symbols <symbol,symbol,...>', 'Custom libruby.so symbols to enable tracing on')
     .parse(process.argv);
 
   program.args = program.args || [];
@@ -69,6 +70,8 @@ async function main() {
 
   let argv0 = (await pExecFile("which", [ruby_argv[0]])).stdout.trim();
   ruby_argv[0] = argv0;
+
+  //console.log(JSON.stringify(program.opts()))
 
   await hook.run(program.opts(), ruby_argv);
   //process.exit(0);

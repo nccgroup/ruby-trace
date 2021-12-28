@@ -22,37 +22,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
+arr = [1, 2, 3]
+
+arr2 = [4, 5, 6, 7]
+def arr2.length
+  42
+end
+def arr2.size
+  43
 end
 
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  arr = [1, 2, 3]
+a = arr.length
+b = arr.size
+c = arr2.length
+d = arr2.size
 
-  arr2 = [4, 5, 6, 7]
-  def arr2.length
-    42
-  end
-  def arr2.size
-    43
-  end
-
-  a = arr.length
-  b = arr.size
-  c = arr2.length
-  d = arr2.size
-
-
-  [a, b, c, d]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-puts (trace { iseq.eval }).inspect
+[a, b, c, d]

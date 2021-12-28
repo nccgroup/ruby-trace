@@ -42,7 +42,7 @@ end
 code = '0x41414141 rescue true'
 
 iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.to_a.inspect
+STDERR.puts iseq.to_a.inspect
 
 b = iseq.to_binary
 
@@ -51,8 +51,8 @@ i = b.index("\x39".b) # leave
 b[i-8] = "\x28".b # nop -> reput
 
 iseq2 = RubyVM::InstructionSequence.load_from_binary(b)
-puts iseq2.to_a.inspect
-puts RubyVM::InstructionSequence.disasm(iseq2)
-puts (trace { iseq2.eval }).inspect
+#puts iseq2.to_a.inspect
+STDERR.puts RubyVM::InstructionSequence.disasm(iseq2)
+puts "result: " + (trace { iseq2.eval }).inspect
 
 

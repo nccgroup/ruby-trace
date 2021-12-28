@@ -22,26 +22,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  t = TracePoint.new(:call) { |tp| }
-  t.enable
-  yield
-ensure
-  t.disable
+require "continuation"
+
+O = []
+def test(a)
+  O.append(a)
 end
 
-require "continuation"
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  arr = [ "Freddie", "Herbie", "Ron", "Max", "Ringo" ]
-  callcc{|cc| $cc = cc}
-  puts(message = arr.shift)
-  $cc.call unless message =~ /Max/ # rb_cont_call goes directly through ruby_longjmp so we can't trace that directly
-end;
+########
 
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
+arr = [ "Freddie", "Herbie", "Ron", "Max", "Ringo" ]
+callcc{|cc| $cc = cc}
 
-puts (trace { iseq.eval }).inspect
+test(arr.length)
+test(message = arr.shift)
+$cc.call unless message =~ /Max/ # rb_cont_call goes directly through ruby_longjmp so we can't trace that directly
 
-puts RubyVM::InstructionSequence.disasm(iseq)
+[O]

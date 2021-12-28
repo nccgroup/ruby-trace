@@ -22,31 +22,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-def trace
-  mytracepoint = TracePoint.new(:call) { |tp| }
-  mytracepoint.enable
-  yield
-ensure
-  mytracepoint.disable
-end
+e = Enumerator::Chain.new(1..3, [4, 5])
+a = e.to_a
 
-mytracepoint2 = TracePoint.new(:call) { |tp| }
-code = "#{<<~"begin;"}\n#{<<~"end;"}"
-begin;
-  e = Enumerator::Chain.new(1..3, [4, 5])
-  a = e.to_a
-
-  enum = Enumerator.new { |y|
-    [y, y.yield("c", "d")]
-  }
-  b = enum.to_a
-  [a, b]
-end;
-
-iseq = RubyVM::InstructionSequence.compile(code)
-puts iseq.inspect
-puts RubyVM::InstructionSequence.disasm(iseq)
-
-mytracepoint2.enable
-#puts (trace { iseq.eval }).inspect
-puts(iseq.eval.inspect)
+enum = Enumerator.new { |y|
+  [y, y.yield("c", "d")]
+}
+b = enum.to_a
+[a, b]

@@ -39,11 +39,9 @@ begin;
 end;
 
 iseq = RubyVM::InstructionSequence.compile(code)
-puts RubyVM::InstructionSequence.disasm(iseq)
-#puts iseq.to_a.inspect
+STDERR.puts RubyVM::InstructionSequence.disasm(iseq)
 
 b = iseq.to_binary
-#puts b.inspect
 
 ans = RubyVM::INSTRUCTION_NAMES.index('answer')
 if ans != nil
@@ -51,8 +49,8 @@ if ans != nil
   b[i] = ans.chr.b # putnil -> answer
 
   iseq2 = RubyVM::InstructionSequence.load_from_binary(b)
-  puts iseq2.to_a.inspect
-  puts RubyVM::InstructionSequence.disasm(iseq2)
+  #puts iseq2.to_a.inspect
+  STDERR.puts RubyVM::InstructionSequence.disasm(iseq2)
   puts (trace { iseq2.eval }).inspect
 end
 
