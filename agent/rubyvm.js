@@ -329,7 +329,7 @@ class RubyVM {
         //console.log("self.native: " + JSON.stringify(self.native))
         self.callback()
       } catch (e) {
-        log("Error[ruby_run_node.onEnter]: " + String(e))
+        log("Error [ruby_run_node.onEnter]: " + String(e))
       }
     })
 
@@ -340,7 +340,7 @@ class RubyVM {
   //       try {
   //         Interceptor.detachAll()
   //       } catch(e) {
-  //         console.log("Error[ruby_run_node.onLeave]: " + String(e))
+  //         console.log("Error [ruby_run_node.onLeave]: " + String(e))
   //       }
   //     }
   //   }*/);

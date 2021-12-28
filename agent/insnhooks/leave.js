@@ -45,7 +45,7 @@ module.exports = function(args) {
     //      and not actually wait for the next instruction on the parent stack
     let val_p = vm.TOPN(0);
     let val_inspect = r.rb_inspect2(val_p);
-    log(">> leave -> " + val_inspect);  
+    log(">> leave -> " + val_inspect);
   } catch (e) {
     log("Error [leave]: " + String(e))
   }
