@@ -51,6 +51,6 @@ if ans != nil
   iseq2 = RubyVM::InstructionSequence.load_from_binary(b)
   #puts iseq2.to_a.inspect
   STDERR.puts RubyVM::InstructionSequence.disasm(iseq2)
-  puts (trace { iseq2.eval }).inspect
+  puts "result: " + (trace { iseq2.eval }).inspect
 end
 

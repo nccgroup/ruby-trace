@@ -39,7 +39,7 @@ begin;
 end;
 
 iseq = RubyVM::InstructionSequence.compile(code)
-puts RubyVM::InstructionSequence.disasm(iseq)
+STDERR.puts RubyVM::InstructionSequence.disasm(iseq)
 #puts iseq.to_a.inspect
 
 b = iseq.to_binary
@@ -51,8 +51,8 @@ if blt != nil
   b[i] = blt.chr.b # putnil -> bitblt
 
   iseq2 = RubyVM::InstructionSequence.load_from_binary(b)
-  puts iseq2.to_a.inspect
-  puts RubyVM::InstructionSequence.disasm(iseq2)
-  puts (trace { iseq2.eval }).inspect
+  #puts iseq2.to_a.inspect
+  STDERR.puts RubyVM::InstructionSequence.disasm(iseq2)
+  puts "result: " + (trace { iseq2.eval }).inspect
 end
 
