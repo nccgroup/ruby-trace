@@ -428,10 +428,11 @@ module.exports = function(name) {
       try {
         //log(">> inlined vm_sendish hit")
         switch (vm.ruby_version) {
-          case 26: {
+          case 26:
+          case 27: {
+            //note: inline method cache introduced in 3.0
             break;
           }
-          case 27:
           case 30:
           case 31:
           default: {
@@ -441,7 +442,7 @@ module.exports = function(name) {
             let ci_p = vm.native.rb_call_data__ci(cd_p)
             let cc_p = vm.native.rb_call_data__cc(cd_p)
 
-            let argc = vm.native.rb_callinfo__argc(ci_p)
+            let argc = vm.native.rb_callinfo__argc(ci_p);
             let recv = vm.TOPN(argc, null, reg_cfp)
 
             let klass = r.rb_class_of(recv);

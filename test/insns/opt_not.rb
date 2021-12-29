@@ -42,4 +42,4 @@ d = !!n4
 e = !!n5
 f = !!n6
 
-[a, b, c, d, e, f]
+[a, b, c, d, e, to_s_addr_fix(f)]

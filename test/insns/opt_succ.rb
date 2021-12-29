@@ -36,4 +36,4 @@ a = n1.succ
 b = n2.succ
 c = n3.succ.succ
 
-[a, b, c]
+[a, b, to_s_addr_fix(c)]

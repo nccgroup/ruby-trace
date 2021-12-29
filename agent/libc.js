@@ -34,6 +34,7 @@ class Libc {
     this.write = new NativeFunction(libc.getExportByName('write'), 'ssize_t', ['int', 'pointer', 'size_t']);
 
     this.fputs = new NativeFunction(libc.getExportByName('fputs'), 'int', ['pointer', 'pointer']);
+    this._puts = new NativeFunction(libc.getExportByName('puts'), 'int', ['pointer']);
 
     this.fdopen = new NativeFunction(libc.getExportByName('fdopen'), 'pointer', ['int', 'pointer']);
     this.stdout = libc.getExportByName('stdout').readPointer();
@@ -81,6 +82,11 @@ class Libc {
       let log_buf = Memory.allocUtf8String(msg + "\n");
       this.write(1, log_buf, msg.length + 1)  
     }
+  }
+
+  puts = (str) => {
+    let cstr = Memory.allocUtf8String(str);
+    this._puts(cstr);
   }
 
 }

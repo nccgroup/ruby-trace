@@ -94,6 +94,7 @@ class RubyVM {
     this.native = null;
     this.return_callback = null;
     this.last_insn = null;
+    r.vm = this
 
     this.BOP_PLUS = 0x0
     this.BOP_MINUS = 0x1
@@ -275,7 +276,11 @@ class RubyVM {
         require 'json'
         def __ruby_trace_inspect(obj)
           begin
+            #any_to_s = Kernel.instance_method(:to_s).bind(obj).call()
+            #STDOUT.puts ">> __ruby_trace_inspect: " + any_to_s
+            #STDOUT.flush
             obj.inspect
+            #"<unknown:TKTK>"
           rescue =>e
             "<uninspectable of type " + obj.class.to_s + ":" + e.inspect + ">"
           end

@@ -61,4 +61,4 @@ p = f.instance_variable_get "@a"
 q = f.instance_variable_get :@a
 
 
-[f, a, [b, c, d], [e, g, h, i], [j, k, l, m], [n, o, p, q]]
+[to_s_addr_fix(f), a, [b, c, d], [e, g, h, i], [j, k, l, m], [n, o, p, q]]

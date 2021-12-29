@@ -22,9 +22,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#note: 3.0+ disable this by default
+#note: 3.0+ disables this by default
 
 a = Struct.new(:a).new
 a.a = "yolo"
-
-[a]
+a

@@ -2,3 +2,4 @@ node_modules/
 _agent.js
 *.bak
 *.tgz
+__pycache__/

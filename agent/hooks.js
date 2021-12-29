@@ -31,7 +31,12 @@ let { log } = require('./libc')();
 const VALUE = 'pointer';
 const ID = 'pointer';
 
-const insnhooks = require('./insnhooks')
+const insnhooks = require('./insnhooks');
+const libc = require('./libc');
+
+const unsafe_to_rb_inspect2 = new Set([
+  // "rb_mod_remove_const"
+]);
 
 const unhookables = new Set([
   "rb_false",
@@ -2206,13 +2211,27 @@ class Hooks {
         let rt_argc = metadata.cfunc.rt_argc;
         try {
           if (def_argc >= 0) {
+            // log(">> cfunc: def_argc >= 0")
             let argc;
-            if (def_argc != rt_argc && rt_argc != null) {
-              // log(">> cfunc def_argc: " + def_argc + " != rt_argc: " + rt_argc)
-              argc = rt_argc + 1;
+            // log(">> cfunc: def_argc: " + def_argc);
+            // log(">> cfunc: rt_argc: " + rt_argc);
+
+            if (rt_argc == null) {
+              argc = def_argc + 1;
+            } else if (rt_argc != def_argc) { // might need to be >
+              argc = rt_argc;
             } else {
               argc = def_argc + 1;
             }
+
+            // if (def_argc != rt_argc && rt_argc != null) {
+            //   // log(">> cfunc def_argc: " + def_argc + " != rt_argc: " + rt_argc)
+            //   argc = rt_argc + 1;
+            // } else {
+            //   argc = def_argc + 1;
+            // }
+            // log(">> cfunc: argc: " + argc);
+
             // let argc = metadata.cfunc.rt_argc;
             let recv = frida_args[0];
             let argv = [];
@@ -2225,6 +2244,11 @@ class Hooks {
               // log(">> falling back to rb_inspect2")
               try {
                 recv_inspect = r.rb_inspect2(recv);
+                // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+                //   recv_inspect = r.rb_inspect2(recv);
+                // } else {
+                //   recv_inspect = "<unknown:" + recv + ">";
+                // }
               } catch (e) {
                 recv_inspect = "<unknown:" + recv + ">"
               }
@@ -2234,12 +2258,19 @@ class Hooks {
 
             // log(">> onEnter hook: recv_inspect: " + recv_inspect)
             let argv_inspect = [];
+            let i = 0;
             for (let v of argv) {
               if (v == r.Qnil) {
                 argv_inspect.push("nil");
               } else {
                 argv_inspect.push(r.rb_inspect2(v));
+                // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+                //   argv_inspect.push(r.rb_inspect2(v));
+                // } else {
+                //   argv_inspect.push("<uninspectable>");
+                // }
               }
+              i += 1;
             }
   
             let argv_inspect_s = "";
@@ -2254,6 +2285,12 @@ class Hooks {
             let recv = frida_args[2];
   
             let recv_inspect = r.rb_inspect2(recv);
+            // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+            //   recv_inspect = r.rb_inspect2(recv);
+            // } else {
+            //   recv_inspect = r.rb_inspect2(recv);
+            // }
+
             let argv_inspect = [];
   
             for (let i=0; i < argc; i++) {
@@ -2262,6 +2299,11 @@ class Hooks {
                 argv_inspect.push("nil");
               } else {
                 argv_inspect.push(r.rb_inspect2(v));
+                // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+                //   argv_inspect.push(r.rb_inspect2(v));
+                // } else {
+                //   argv_inspect.push(r.rb_inspect2(v));
+                // }
               }
             }
   
@@ -2272,8 +2314,21 @@ class Hooks {
             let recv = frida_args[0];
             let args = frida_args[1]; // rb_ary_new4(...)
   
+            // let recv_inspect = r.rb_inspect2(recv);
             let recv_inspect = r.rb_inspect2(recv);
+            // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+            //   recv_inspect = r.rb_inspect2(recv);
+            // } else {
+            //   recv_inspect = r.rb_inspect2(recv);
+            // }
+
+            // let args_inspect_s = r.rb_inspect2(args);
             let args_inspect_s = r.rb_inspect2(args);
+            // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+            //   args_inspect_s = r.rb_inspect2(args);
+            // } else {
+            //   args_inspect_s = r.rb_inspect2(args);
+            // }
   
             this.call_str = metadata.cfunc.func_s + "(" + recv_inspect + ", " + args_inspect_s  + ")"
           }
@@ -2532,7 +2587,7 @@ function trace_vm_call_cfunc(hooks) {
       let ec = args[0];
       let reg_cfp = args[1];
       log(">> vm_call_cfunc(_with_frame): reg_cfp: " + reg_cfp + ", ec->cfp: " + vm.native.rb_execution_context_struct__cfp(ec))
-
+      //return;
       /*
         // ruby 2.7
         const struct rb_call_info *ci = &cd->ci;

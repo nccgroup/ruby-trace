@@ -1,0 +1,391 @@
+{
+  "tests": {
+    "insns/adjuststack.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["adjuststack"],
+      "v": ["all"]
+    },
+    "insns/answer.rb": {
+      "w": null,
+      "insns": ["answer"],
+      "v": ["26"]
+    },
+    "insns/basic_opts.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_and", "opt_div", "opt_eq", "opt_ge", "opt_gt", "opt_le", "opt_lt", "opt_ltlt", "opt_minus", "opt_mod", "opt_mult", "opt_neq", "opt_or", "opt_plus"],
+      "v": ["all"]
+    },
+    "insns/bitblt.rb": {
+      "w": null,
+      "insns": ["bitblt"],
+      "v": ["26"]
+    },
+    "insns/call_ops.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["send", "opt_send_without_block", "invokesuper", "invokeblock"],
+      "v": ["all"]
+    },
+    "insns/checkkeyword.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["checkkeyword"],
+      "v": ["all"]
+    },
+    "insns/checkmatch.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["checkmatch"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/checkmatch26.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["checkmatch"],
+      "v": ["all"]
+    },
+    "insns/checktype.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["checktype"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/checktype26.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["checktype"],
+      "v": ["26", "27", "30"]
+    },
+    "insns/classviariable.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getclassvariable", "setclassvariable"],
+      "v": ["all"]
+    },
+    "insns/concatarray.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["concatarray"],
+      "v": ["all"]
+    },
+    "insns/concatstrings_tostring.rb:26-30": {
+      "w": "test_wrapper.rb",
+      "s": "insns/concatstrings_tostring.rb",
+      "insns": ["concatstrings", "tostring"],
+      "v": ["26", "27", "30"]
+    },
+    "insns/concatstrings_tostring.rb:31+": {
+      "w": "test_wrapper.rb",
+      "s": "insns/concatstrings_tostring.rb",
+      "insns": ["concatstrings", "anytostring", "objtostring"],
+      "v": ["31"]
+    },
+    "insns/constant.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getconstant", "setconstant"],
+      "v": ["all"]
+    },
+    "insns/defineclass.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["defineclass"],
+      "v": ["all"]
+    },
+    "insns/defined.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["defined"],
+      "v": ["all"]
+    },
+    "insns/definemethod.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["definemethod"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/definesmethod.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["definesmethod"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/dup_pop.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["dup", "pop"],
+      "v": ["all"]
+    },
+    "insns/duparray.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["duparray"],
+      "v": ["all"]
+    },
+    "insns/duphash.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["duphash"],
+      "v": ["all"]
+    },
+    "insns/dupn.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["dupn"],
+      "v": ["all"]
+    },
+    "insns/expandarray.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["expandarray"],
+      "v": ["all"]
+    },
+    "insns/freezestring.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["freezestring"],
+      "v": ["26", "27"]
+    },
+    "insns/getsetlocaletc.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getlocal", "setlocal", "getlocal_WC_0", "setlocal_WC_0", "getlocal_WC_1", "setlocal_WC_1", "getblockparam", "setblockparam", "getblockparamproxy"],
+      "v": ["all"]
+    },
+    "insns/global.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getglobal", "setglobal"],
+      "v": ["all"]
+    },
+    "insns/instancevariable.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getinstancevariable", "setinstancevariable"],
+      "v": ["all"]
+    },
+    "insns/intern.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["intern"],
+      "v": ["all"]
+    },
+    "insns/invokeblock.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["invokeblock"],
+      "v": ["all"]
+    },
+    "insns/invokeblock3.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["invokeblock"],
+      "v": ["30", "31"]
+    },
+    "insns/invokebuiltin.rb": {
+      "w": "test_wrapper.rb",
+      "disasm_insns": [],
+      "insns": ["invokebuiltin"],
+      "v": ["30"]
+    },
+    "insns/jump_branch.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["jump", "branchif", "branchunless", "branchnil"],
+      "v": ["all"]
+    },
+    "insns/leave.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["leave"],
+      "v": ["all"]
+    },
+    "insns/local.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getlocal", "setlocal", "getlocal_WC_0", "setlocal_WC_0", "getlocal_WC_1", "setlocal_WC_1"],
+      "v": ["all"]
+    },
+    "insns/newarray.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["newarray"],
+      "v": ["all"]
+    },
+    "insns/newarraykwsplat.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["newarraykwsplat"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/newhash.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["newhash"],
+      "v": ["all"]
+    },
+    "insns/newrange.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["newrange"],
+      "v": ["all"]
+    },
+    "insns/nop.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["nop"],
+      "v": ["all"]
+    },
+    "insns/object.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["putobject", "putobject_INT2FIX_0_", "putobject_INT2FIX_1_", "putself"],
+      "v": ["all"]
+    },
+    "insns/once.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["once"],
+      "v": ["all"]
+    },
+    "insns/opt_aref_opt_aref_with.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_aref", "opt_aref_with"],
+      "v": ["all"]
+    },
+    "insns/opt_aset_opt_aset_with.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_aset", "opt_aset_with"],
+      "v": ["all"]
+    },
+    "insns/opt_call_c_function.rb": {
+      "w": "test_wrapper.rb",
+      "disasm_insns": [],
+      "insns": ["opt_call_c_function"],
+      "v": ["26", "27"]
+    },
+    "insns/opt_case_dispatch.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_case_dispatch"],
+      "v": ["all"]
+    },
+    "insns/opt_empty_p.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_empty_p"],
+      "v": ["all"]
+    },
+    "insns/opt_getinlinecache_setinlinecache.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_getinlinecache", "opt_setinlinecache"],
+      "v": ["all"]
+    },
+    "insns/opt_invokebuiltin_delegate.rb": {
+      "w": "test_wrapper.rb",
+      "disasm_insns": ["opt_invokebuiltin_delegate_leave"],
+      "insns": ["opt_invokebuiltin_delegate"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/opt_invokebuiltin_delegate_leave.rb": {
+      "t": "-s obj_to_enum",
+      "w": null,
+      "insns": ["opt_invokebuiltin_delegate_leave"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/opt_length_opt_size.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_length", "opt_size"],
+      "v": ["all"]
+    },
+    "insns/opt_newarray_minmax.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_newarray_min", "opt_newarray_max"],
+      "v": ["all"]
+    },
+    "insns/opt_nil_p.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_nil_p", "putnil"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/opt_not.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_not"],
+      "v": ["all"]
+    },
+    "insns/opt_plus.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_plus"],
+      "v": ["all"]
+    },
+    "insns/opt_regexpmatch1_opt_regexpmatch2.rb:26": {
+      "w": "test_wrapper.rb",
+      "s": "insns/opt_regexpmatch1_opt_regexpmatch2.rb",
+      "insns": ["opt_regexpmatch1", "opt_regexpmatch2"],
+      "v": ["26"]
+    },
+    "insns/opt_regexpmatch1_opt_regexpmatch2.rb:27+": {
+      "w": "test_wrapper.rb",
+      "s": "insns/opt_regexpmatch1_opt_regexpmatch2.rb",
+      "insns": ["opt_regexpmatch2"],
+      "v": ["27", "30", "31"]
+    },
+    "insns/opt_str_freeze.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_str_freeze"],
+      "v": ["all"]
+    },
+    "insns/opt_str_uminus.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_str_uminus"],
+      "v": ["all"]
+    },
+    "insns/opt_succ.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["opt_succ"],
+      "v": ["all"]
+    },
+    "insns/putiseq.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["putiseq"],
+      "v": ["26"]
+    },
+    "insns/putspecialobject.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["putspecialobject"],
+      "v": ["all"]
+    },
+    "insns/putspecialobject2.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["putspecialobject"],
+      "v": ["all"]
+    },
+    "insns/putstring.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["putstring"],
+      "v": ["all"]
+    },
+    "insns/reput.rb": {
+      "w": null,
+      "insns": ["reput"],
+      "v": ["26"]
+    },
+    "insns/reverse.rb:26-30": {
+      "w": "test_wrapper.rb",
+      "s": "insns/reverse.rb",
+      "insns": ["reverse"],
+      "v": ["26", "27", "30"]
+    },
+    "insns/reverse.rb:31+": {
+      "w": "test_wrapper.rb",
+      "s": "insns/reverse.rb",
+      "insns": ["newarray", "expandarray"],
+      "v": ["31"]
+    },
+    "insns/setn.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["setn"],
+      "v": ["all"]
+    },
+    "insns/special.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["getspecial", "setspecial"],
+      "v": ["all"]
+    },
+    "insns/splatarray.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["splatarray"],
+      "v": ["all"]
+    },
+    "insns/swap_topn.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["swap", "topn"],
+      "v": ["all"]
+    },
+    "insns/throw.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["throw"],
+      "v": ["all"]
+    },
+    "insns/topn.rb": {
+      "w": "test_wrapper.rb",
+      "insns": ["topn"],
+      "v": ["30", "31"]
+    },
+    "insns/toregexp_opt_regexpmatch.rb:26": {
+      "w": "test_wrapper.rb",
+      "s": "insns/toregexp_opt_regexpmatch.rb",
+      "insns": ["toregexp", "opt_regexpmatch1", "opt_regexpmatch2"],
+      "v": ["26"]
+    },
+    "insns/toregexp_opt_regexpmatch.rb:27+": {
+      "w": "test_wrapper.rb",
+      "s": "insns/toregexp_opt_regexpmatch.rb",
+      "insns": ["toregexp", "opt_regexpmatch2"],
+      "v": ["27", "30", "31"]
+    }
+  }
+}

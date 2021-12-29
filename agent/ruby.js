@@ -55,6 +55,7 @@ class Ruby {
     let self = this;
     libc.r = this;
     this.libruby = libruby;
+    this.vm = null;
     this.hooks = null;
     this.rb_define_method_metadatas = {}
     this.rb_define_module_function_metadatas = {}
@@ -206,6 +207,11 @@ class Ruby {
     // console.log("by name: " + libruby.getExportByName('rb_funcallv').toString())
     // console.log("by symbol: " + this.sym_to_addr_map['rb_funcallv'].address.toString())
     this.rb_funcallv = new NativeFunction(this.rb_funcallv_ptr, VALUE, [VALUE, ID, 'int', VALUE]);
+    // this.rb_bug_ptr = this.sym_to_addr_map['rb_bug'].address;
+    // this.rb_bug = new NativeFunction(this.rb_bug_ptr, 'void', ['pointer']);
+    // this.rb_bug_context_ptr = this.sym_to_addr_map['rb_bug_context'].address;
+    // this.rb_bug_context = new NativeFunction(this.rb_bug_context_ptr, 'void', ['pointer', 'pointer']);
+    // this.abort_ptr = libc.libc.getExportByName('abort');
 
     // this.rb_funcallv = new NativeFunction(this.rb_funcallv_ptr, VALUE, [VALUE, ID, 'int', VALUE]);
     this.iterate_method_addr = this.sym_to_addr_map['iterate_method'].address;
@@ -457,6 +463,17 @@ class Ruby {
           return self.Qnil;
         }
       }, VALUE, [VALUE, ID, 'int', VALUE]));
+      // Interceptor.replace(self.rb_bug_ptr, new NativeCallback((fmt) => {
+      //   let fmt_str = Memory.readUtf8String(fmt);
+      //   console.log('>> caught rb_bug: "' + fmt_str + '"');
+      // }, 'void', ['pointer']));
+      // Interceptor.replace(self.rb_bug_context_ptr, new NativeCallback((ctx, fmt) => {
+      //   let fmt_str = Memory.readUtf8String(fmt);
+      //   console.log('>> caught rb_bug_context: "' + fmt_str + '"');
+      // }, 'void', ['pointer', 'pointer']));
+      // Interceptor.replace(self.abort_ptr, new NativeCallback(() => {
+      //   console.log('>> caught abort()');
+      // }, 'void', []));
 
       ruby_setup_hook.detach();
     })
@@ -686,7 +703,6 @@ class Ruby {
     return this.funcall_tripwire;
   }
 
-
   enable_funcall() {
     if (this.funcall_enabled) {
       log("[ruby] enable_funcall() called when funcall_enabled is true");
@@ -864,7 +880,7 @@ class Ruby {
 
   dyn_inspect(obj) {
     if (obj.equals(this.Qnil)) {
-      log("[dyn_inspect]: got nil")
+      // log(">> [dyn_inspect]: got nil")
       return "nil";
     }
 
@@ -878,21 +894,22 @@ class Ruby {
       let klass = this.rb_class_of(obj);
       let mod_name = this.rb_mod_name(klass);
       if (mod_name.equals(this.Qnil)) {
-        //log("[dyn_inspect]: mod_name nil")
+        // log(">> dyn_inspect: nod_name nill")
         return this.ruby_str_to_js_str(this.inspect_map["Kernel"]['func'](obj))
       }
 
       let klass_str = this.ruby_str_to_js_str(mod_name)
-      // log("[dyn_inspect]: klass_str: " + klass_str);
+      // log(">> dyn_inspect: klass_str: " + klass_str);
 
       let o = this.inspect_map[klass_str];
       if (o === undefined) {
-        if (["Enumerator", "Proc", "Integer"].includes(klass_str)) {
+        if (["Enumerator", "Range", "Proc", "Integer"].includes(klass_str)) {
+          // log(">> dyn_inspect: EPI")
           return this.ruby_str_to_js_str(this.rb_any_to_s(obj))
         }
   
         if (klass_str.startsWith("Enumerator::")) {
-          // log("[dyn_inspect]: Enumerator")
+          // log(">> dyn_inspect: E::")
           // note: the rb_exec_recursive() call from Enumerator.inspect likely
           //       causes problems for the vm_call context
           return this.ruby_str_to_js_str(this.rb_any_to_s(obj))
@@ -902,8 +919,32 @@ class Ruby {
         return "?:" + this.ruby_str_to_js_str(this.rb_any_to_s(obj))
       }
 
+      switch (this.vm.ruby_version) {
+        case null: // if not initialized yet, assume worst case
+        case 27: {
+          //note: Range are seemingly all sorts of trouble from w/in rb_vm_call0,
+          //      but Enumerator and Array causes issues in 2.7 (but not 2.6).
+          //
+          //      if something breaks in 2.7 where the output is different, look
+          //      for calls to rb_vm_call0 and try adding the type of the object
+          //      being dyn_inspect-ed here. it's just a super buggy version of
+          //      ruby (part of the issue could be that our funcall_tripwire
+          //      simply doesn't work for 2.7). 
+          if (["Range", "Enumerator", "Array"].includes(klass_str)) {
+            return this.ruby_str_to_js_str(this.rb_any_to_s(obj))
+          }
+        }
+        default: {
+          if (["Range"].includes(klass_str)) {
+            return this.ruby_str_to_js_str(this.rb_any_to_s(obj))
+          }
+        }
+      }
+
       this.clear_funcall_tripwire()
       let ret;
+      // log(">> dyn_inspect: o: " + JSON.stringify(o))
+      // log(">> dyn_inspect: " + JSON.stringify(this.addr_to_sym_map[o['func']]))
       if (o['argc'] == -1) {
         // int argc, VALUE *argv, VALUE x
         ret = o['func'](0, ptr(0), obj);
@@ -915,6 +956,7 @@ class Ruby {
       } else if (ret.equals(this.Qnil)) {
         return this.ruby_str_to_js_str(this.rb_any_to_s(obj));
       } else if (this.did_funcall_trip()) {
+        // log(">> dyn_inspect: funcall tripped")
         return this.ruby_str_to_js_str(this.rb_any_to_s(obj));
       }
 
@@ -977,7 +1019,9 @@ class Ruby {
     if (obj == null) { return null; }
     let arr = Memory.alloc(Process.pointerSize);
     arr.writePointer(obj);
+    //libc.puts(">> ruby_trace_inspect() stack: " + (new Error()).stack)
     return this.rb_funcallv(this.rb_mKernel, this.__ruby_trace_inspect_sym, 1, arr);
+    //return this.Qnil;
   }
 
   ruby_trace_hash_inverter(obj) {
@@ -1011,7 +1055,7 @@ class Ruby {
       let ex = this.rb_errinfo()
       if (!ex.isNull() && !ex.equals(this.Qnil)) {
         let ex_inspect = this.static_inspect(ex)
-        log(">> Error [rb_inspect]: Exception raised: " + ex_inspect + " (" + ex + "), inspect ret: " + this.ruby_str_to_js_str(inspect) + " (" + inspect + ")")
+        log(">> Error [[rb_inspect]]: Exception raised: " + ex_inspect + " (" + ex + "), inspect ret: " + this.ruby_str_to_js_str(inspect) + " (" + inspect + ")")
         // this.rb_set_errinfo(this.Qnil);
         return "<uninspectable of type " + this.rb_inspect3(klass) + ">";
       }
@@ -1025,7 +1069,12 @@ class Ruby {
     //note: rb_inspect uses rb_funcallv internally
     let klass = this.rb_class_of(obj);
     if (!klass.isNull()) {
-      return this.ruby_str_to_js_str(this.rb_inspect(obj))
+      try {
+        return this.ruby_str_to_js_str(this.rb_inspect(obj))
+      } catch (e) {
+        log(">> Error [rb_inspect3]: " + String(e))
+        return "<uninspectable>";
+      }
     } else {
       return "<uncallable (class:null) [rb_inspect3]>";
     }
@@ -1246,6 +1295,9 @@ class Ruby {
   }
 
   rb_ractor_main_p() {
+    if (this.ruby_single_main_ractor == null) {
+      return true;
+    }
     if (!this.ruby_single_main_ractor.readPointer().isNull()) {
       return true;
     }

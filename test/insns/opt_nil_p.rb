@@ -26,4 +26,4 @@ nil.nil?
 
 class Niller; def nil?; "wat"; end; end
 niller = Niller.new
-puts niller.nil?
+niller.nil?

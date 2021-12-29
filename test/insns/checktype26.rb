@@ -22,60 +22,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#note: opt_regexpmatch1 was removed in 2.7
+#note: in 2.6, it looks like checktype is only emitted by compile_evstr and
+#      only for T_STRING
 
-r1 = /true/
-
-O = []
-def output(msg)
-  O.append(msg)
-end
-
-r2 = /true/.dup
-def r2.=~(obj)
-  output "r2.=~"
-  nil
-end  
-
-r3 = /true/.dup
-def r3.!(obj)
-  nil
-end  
-
-a = /true/ =~ 'true'
-b = 'true' =~ /true/
-c = 5 =~ /5/
-d = Object.new =~ /Object/
-
-e = r1 =~ 'true'
-f = 'true' =~ r1
-
-g = r2 =~ 'truetrue'
-h = 'truetrue' =~ r2
-
-i = r3 =~ 'falsefalse'
-j = 'falsefalse' =~ r3
-
-class String
-  def =~(obj)
-    output "String.=~"
-    nil
-  end
-end
-
-k = 'true' =~ r1
-
-l = /true/ =~ 'true'
-m = 'true' =~ /true/
-
-class Regexp
-  def =~(obj)
-    output "Regexp.=~"
-    nil
-  end
-end
-
-n = /true/ =~ 'true'
-o = 'true' =~ /true/
-
-[O, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o]
+a = "world"
+"hello #{a}"

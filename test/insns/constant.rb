@@ -23,5 +23,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 FOO = 42
-puts FOO
-puts Object::FOO
+[FOO, Object::FOO]

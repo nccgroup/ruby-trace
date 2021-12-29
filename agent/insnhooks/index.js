@@ -116,7 +116,7 @@ module.exports = {
   "opt_plus": basic_opts("opt_plus", "+"),
   "opt_minus": basic_opts("opt_minus", "-"),
   "opt_mult": basic_opts("opt_mult", "*"),
-  "opt_div": basic_opts("opt_dif", "/"),
+  "opt_div": basic_opts("opt_div", "/"),
   "opt_mod": basic_opts("opt_mod", "%"),
   "opt_eq": basic_opts("opt_eq", "=="),
   "opt_neq": basic_opts("opt_neq", "!="),

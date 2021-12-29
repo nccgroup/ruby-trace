@@ -27,22 +27,6 @@ def foo
   b = $9
   c = $20
 
-  #if nil.nil?..nil.nil?
-  #  puts "true"
-  #else
-  #  puts "false"
-  #end
-
-  #stuff = [:a, :b, :c, :d, :e, :f]
-  #selected = []
-
-  #stuff.each do |thing|
-  #  if (thing == :b)..(thing == :d)
-  #    selected << thing
-  #  end
-  #end
-  #puts selected
-
   d = if (true)..(false)
     "test1"
   end

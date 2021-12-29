@@ -26,7 +26,6 @@ a = "2"
 x = "4#{a}"
 
 def test(v)
-  #puts v.inspect
   case v
   in {foo: val}
     val

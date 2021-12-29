@@ -34,4 +34,4 @@ end
 c = 'foo2'.freeze
 d = 'foo2'.freeze
 
-[a, b, c, d]
+[a == b, c, d]

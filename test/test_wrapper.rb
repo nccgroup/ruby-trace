@@ -38,6 +38,24 @@ if code == nil
   prelude = ""
 end
 
+def to_s_addr_fix(obj)
+  os = Kernel.instance_method(:to_s).bind(obj).call()
+  prefix = os.chomp(">")
+  addr = os.split(':')[1].chomp(">")
+  nprefix = prefix.sub(":" + addr, ":0x" + ('X'*(addr.length-2)))
+  s = obj.to_s
+  s.sub(prefix, nprefix)
+end
+
+def inspect_addr_fix(obj)
+  os = Kernel.instance_method(:to_s).bind(obj).call()
+  prefix = os.chomp(">")
+  addr = os.split(':')[1].chomp(">")
+  nprefix = prefix.sub(":" + addr, ":0x" + ('X'*(addr.length-2)))
+  s = obj.inspect
+  s.sub(prefix, nprefix)
+end
+
 pre = eval(prelude)
 if pre.class == RubyVM::InstructionSequence
   STDERR.puts pre.disasm
@@ -49,6 +67,7 @@ end
 
 iseq = RubyVM::InstructionSequence.compile(code)
 
-puts "result: " + (trace { iseq.eval }).inspect
+print "result: "
+puts (trace { iseq.eval }).inspect
 
 STDERR.puts RubyVM::InstructionSequence.disasm(iseq)

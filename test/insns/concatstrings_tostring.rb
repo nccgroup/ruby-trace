@@ -22,4 +22,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-class Foo; def to_s; 42 end; end; puts "k#{5+3}s #{Foo.new}"
+class Foo; def to_s; 42 end; end; ["k#{5+3}s #{inspect_addr_fix(Foo.new)}"]

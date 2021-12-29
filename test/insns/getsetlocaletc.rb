@@ -28,7 +28,7 @@ def block_yield
 end
 
 def block_pass &b
-  [b.to_s, block_yield(&b)]
+  [to_s_addr_fix(b), block_yield(&b)]
 end
 
 def f(&b)
@@ -48,10 +48,6 @@ module Foo
       a = y
     end
     o1 = "a: #{a}"
-
-    #[1, 2, 3].each do |n|
-    #  puts "Number #{n}"
-    #end
 
     a += "0"
     pr = proc do

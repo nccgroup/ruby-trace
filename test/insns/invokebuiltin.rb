@@ -22,7 +22,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#note: invokebuiltin is used by Struct internals
+#note: invokebuiltin is used by Struct internals.
+#      also, ruby 3.1 has basically pulled the plug on all the
+#      rb_builtin_function/RB_BUILTIN_FUNCTION stuff. it's still there, but
+#      nothing uses it anymore, so none of the native classes that try to
+#      pretend to be a bit more ruby-ish have a "builtin function table" for
+#      their iseqs, which is what tells the compiler to emit invokebuiltin. and
+#      while it was introduced in 2.7, it wasn't actually used until 3.0. so
+#      i guess it was a failed experiment or something.
+
 a = Struct.new(:a).new
 a.a = "yolo"
 a

@@ -23,4 +23,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 $foo = 42
-puts $foo
+[$foo]

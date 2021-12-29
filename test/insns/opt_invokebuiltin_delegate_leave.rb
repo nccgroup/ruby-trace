@@ -39,8 +39,6 @@ D = GC.method(:disable)
 is2 = RubyVM::InstructionSequence.of(D)
 STDERR.puts is2.disasm
 
-########
-
 t = TracePoint.new(:call) { |tp| }
 x = "".to_enum
 
@@ -50,5 +48,5 @@ c = U.call('C')
 GC.disable
 
 t.disable
-puts [a, b, c].inspect
+puts "result: " + [a, b, c].inspect
 
