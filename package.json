@@ -14,10 +14,10 @@
   "license": "BSD-2-Clause/Ruby",
   "dependencies": {
     "commander": "^6.2.1",
-    "frida": "^14.2.18",
-    "mustache": "^4.1.0"
+    "frida": "^15.1.14",
+    "mustache": "^4.2.0"
   },
   "devDependencies": {
-    "frida-compile": "^10.0.0"
+    "frida-compile": "^10.2.5"
   }
 }
