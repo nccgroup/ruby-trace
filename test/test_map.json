@@ -370,6 +370,11 @@
       "insns": ["throw"],
       "v": ["all"]
     },
+    "features/nomethoderror.rb": {
+      "w": "test_wrapper.rb",
+      "insns": [],
+      "v": ["all"]
+    },
     "insns/topn.rb": {
       "w": "test_wrapper.rb",
       "insns": ["topn"],

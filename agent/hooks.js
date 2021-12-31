@@ -1759,6 +1759,41 @@ function return_callback_wrapper(func, insn) {
   }
 }
 
+function in_hook_wrapper(hooks, func) {
+  return function(args){
+    if (hooks.in_hook) {
+      return;
+    } else {
+      try {
+        hooks.in_hook = true;
+        return func(args);
+      } finally {
+        hooks.in_hook = false;
+      }
+    }
+  }
+}
+
+function in_hook_wrapper_warn(hooks, func) {
+  return function(args){
+    let was_in_hook = hooks.in_hook;
+    if (was_in_hook) {
+      log(">>>> was in hook")
+    }
+    try {
+      if (!was_in_hook) {
+        hooks.in_hook = true;
+      }
+      return func(args);
+    } finally {
+      if (!was_in_hook) {
+        hooks.in_hook = false;
+      }
+    }
+  }
+}
+
+
 class Hooks {
   constructor (parameters) {
     this.tracer_interceptors = {}
@@ -1771,6 +1806,7 @@ class Hooks {
     if (parameters.traceSymbols !== undefined) {
       this.trace_symbols = parameters.traceSymbols.split(",");
     }
+    this.in_hook = false;
 
     // enable/disable hooks
     let self = this;
@@ -1839,7 +1875,34 @@ class Hooks {
         }
       });
     }
-    
+
+    this.RubyTrace__Module = r.ruby_eval("RubyTrace__");
+    this.RubyTrace__enable_name_s = "enable";
+    this.RubyTrace__enable_name = Memory.allocUtf8String(this.RubyTrace__enable_name_s);
+    this.RubyTrace__enable = new NativeCallback(function(ruby_self) {
+      // log(">> RubyTrace__.enable called")
+      let ret = r.Qtrue;
+      if (self.tracing()) {
+        ret = r.Qfalse;
+      }
+      self.trace();
+      return ret;
+    }, VALUE, [VALUE])
+    this.RubyTrace__disable_name_s = "disable";
+    this.RubyTrace__disable_name = Memory.allocUtf8String(this.RubyTrace__disable_name_s);
+    this.RubyTrace__disable = new NativeCallback(function(ruby_self) {
+      // log(">> RubyTrace__.disable called")
+      let ret = r.Qtrue;
+      if (!self.tracing()) {
+        ret = r.Qfalse;
+      }
+      self.untrace();
+      return ret;
+    }, VALUE, [VALUE])
+
+    //void rb_define_module_function(VALUE module, const char *name, VALUE(*func)(ANYARGS), int argc);
+    r.rb_define_module_function(this.RubyTrace__Module, this.RubyTrace__enable_name, this.RubyTrace__enable, 0);
+    r.rb_define_module_function(this.RubyTrace__Module, this.RubyTrace__disable_name, this.RubyTrace__disable, 0);
   }
 
   trace() {
@@ -1849,6 +1912,10 @@ class Hooks {
     //      we should try to check what part of our runtime hooks are tripping
     //      the relevant checks and if we can selectively disable gc for
     //      ourselves
+    if (this.is_tracing) {
+      // log(">> trace() called while tracing")
+      return;
+    }
 
     //disable gc
     this.gc_status = r.rb_gc_disable()
@@ -1857,7 +1924,7 @@ class Hooks {
       return;
     }
     this.is_tracing = true;
-    this.tracer_interceptors['rb_vm_call_cfunc'] = Interceptor.attach(r.sym_to_addr_map['rb_vm_call_cfunc'].address, trace_rb_vm_call_cfunc);
+    this.tracer_interceptors['rb_vm_call_cfunc'] = Interceptor.attach(r.sym_to_addr_map['rb_vm_call_cfunc'].address, in_hook_wrapper(this, trace_rb_vm_call_cfunc));
 
     // this.tracer_interceptors['rb_ivar_set'] = Interceptor.attach(r.libruby.getExportByName('rb_ivar_set'), function(args) {
     //   let obj = r.rb_inspect2(args[0]);
@@ -1868,7 +1935,7 @@ class Hooks {
     switch (vm.ruby_version) {
       case 26:
       case 27: {
-        this.tracer_interceptors['vm_call_cfunc'] = Interceptor.attach(r.sym_to_addr_map['vm_call_cfunc'].address, trace_vm_call_cfunc(this));
+        this.tracer_interceptors['vm_call_cfunc'] = Interceptor.attach(r.sym_to_addr_map['vm_call_cfunc'].address, in_hook_wrapper(this, trace_vm_call_cfunc(this)));
         break;
       }
       case 30:
@@ -1880,7 +1947,7 @@ class Hooks {
         //      vm_call_cfunc and go directly to vm_call_cfunc_with_frame.
         //      we therefore hook vm_call_cfunc_with_frame instead of vm_call_cfunc
         //      but treat it the same since the function signature is identical
-        this.tracer_interceptors['vm_call_cfunc'] = Interceptor.attach(r.sym_to_addr_map['vm_call_cfunc_with_frame'].address, trace_vm_call_cfunc(this));
+        this.tracer_interceptors['vm_call_cfunc'] = Interceptor.attach(r.sym_to_addr_map['vm_call_cfunc_with_frame'].address, in_hook_wrapper(this, trace_vm_call_cfunc(this)));
       }
     }
     
@@ -1907,10 +1974,26 @@ class Hooks {
     switch (vm.ruby_version) {
       case 26: {
         Interceptor.replace(this._rb_vm_call0, new NativeCallback((ec, recv, id, argc, argv, me) => {
-          let log_str = trace_rb_vm_call0([ec, recv, id, ptr(argc), argv, me]);
+          if (self.in_hook) {
+            return self._rb_vm_call0(ec, recv, id, argc, argv, me);
+          }
+          self.in_hook = true;
+          let log_str = null;
+          try {
+            log_str = trace_rb_vm_call0([ec, recv, id, ptr(argc), argv, me])
+          } catch (e) {
+            log(">> Error [trace_rb_vm_call0:enter]: " + String(e));
+          }
+          self.in_hook = false;
           let ret = self._rb_vm_call0(ec, recv, id, argc, argv, me);
           if (log_str != null) {
-            log(log_str + " -> " + r.dyn_inspect(ret))
+            self.in_hook = true;
+            try {
+              log(log_str + " -> " + r.dyn_inspect(ret))
+            } catch (e) {
+              log(">> Error [trace_rb_vm_call0:leave]: " + String(e));
+            }
+            self.in_hook = false;
           }
           return ret;
         }, VALUE, this.rb_vm_call0_sig));
@@ -1921,10 +2004,26 @@ class Hooks {
       case 31:
       default: {
         Interceptor.replace(this._rb_vm_call0, new NativeCallback((ec, recv, id, argc, argv, me, kw_splat) => {
-          let log_str = trace_rb_vm_call0([ec, recv, id, ptr(argc), argv, me, ptr(kw_splat)]);
+          if (self.in_hook) {
+            return self._rb_vm_call0(ec, recv, id, argc, argv, me, kw_splat);
+          }
+          self.in_hook = true;
+          let log_str = null;
+          try {
+            log_str = trace_rb_vm_call0([ec, recv, id, ptr(argc), argv, me, ptr(kw_splat)]);
+          } catch (e) {
+            log(">> Error [trace_rb_vm_call0:enter]: " + String(e));
+          }
+          self.in_hook = false;
           let ret = self._rb_vm_call0(ec, recv, id, argc, argv, me, kw_splat);
           if (log_str != null) {
-            log(log_str + " -> " + r.dyn_inspect(ret))
+            self.in_hook = true;
+            try {
+              log(log_str + " -> " + r.dyn_inspect(ret))
+            } catch (e) {
+              log(">> Error [trace_rb_vm_call0:leave]: " + String(e));
+            }
+            self.in_hook = false;
           }
           return ret;
         }, VALUE, this.rb_vm_call0_sig));
@@ -1937,7 +2036,7 @@ class Hooks {
           //note: in ruby 2.7, it looks like the reason vm_call_cfunc seems to be called every time for a cfunc call
           //      is that the caching is not as good as in ruby 3.0, and additionally, even if the caching happens,
           //      it is vm_call_cfunc itself that is the cached function called directly.
-          this.tracer_interceptors['vm_search_method_fastpath'] = Interceptor.attach(r.sym_to_addr_map['vm_search_method_fastpath'].address, function(args){
+          this.tracer_interceptors['vm_search_method_fastpath'] = Interceptor.attach(r.sym_to_addr_map['vm_search_method_fastpath'].address, in_hook_wrapper(this, function(args){
             // log(">> vm_search_method_fastpath hit")
             let cd_p = args[0]
             let klass = args[1]
@@ -1988,14 +2087,14 @@ class Hooks {
             }/* else {
               log(">> does not have class serial: " + has_class_serial)
             }*/
-          })    
+          }));    
           break;
         }
         case 30:
         case 31: //note: likely inlined
         default: {
           if (r.vm_sendish != null) {
-            this.tracer_interceptors['vm_sendish'] = Interceptor.attach(r.vm_sendish.address, function(args){
+            this.tracer_interceptors['vm_sendish'] = Interceptor.attach(r.vm_sendish.address, in_hook_wrapper(this, function(args){
               // log(">> vm_sendish hit")
               let method_explorer = args[4]
               if (!method_explorer.equals(ptr(0x0))) { // 0: mexp_search_method, but it's also a good check for the mjit funcptr variant
@@ -2020,7 +2119,7 @@ class Hooks {
                 log(">> vm_sendish: inline method cache hit, cd->cc->call_: " + call_s);
               }
   
-            });  
+            }));  
           } else { // we get creative
             //note: there are 4 callers of vm_sendish
             //      * insn send, w/ mexp_search_method
@@ -2039,12 +2138,12 @@ class Hooks {
     }
 
     //note: while rb_iterate itself is exported, rb_lambda_call uses rb_iterate0 directly
-    this.tracer_interceptors['rb_iterate0'] = Interceptor.attach(r.sym_to_addr_map['rb_iterate0'].address, trace_rb_iterate0);
+    this.tracer_interceptors['rb_iterate0'] = Interceptor.attach(r.sym_to_addr_map['rb_iterate0'].address, in_hook_wrapper(this, trace_rb_iterate0));
 
     for (let rb_ec_tag_jump of r.rb_ec_tag_jump_list) {
-      this.tracer_interceptors[rb_ec_tag_jump.name] = Interceptor.attach(rb_ec_tag_jump.address, trace_rb_ec_tag_jump(rb_ec_tag_jump.name));
+      this.tracer_interceptors[rb_ec_tag_jump.name] = Interceptor.attach(rb_ec_tag_jump.address, in_hook_wrapper(this, trace_rb_ec_tag_jump(rb_ec_tag_jump.name)));
     }
-    this.tracer_interceptors['rb_throw_obj'] = Interceptor.attach(r.libruby.getExportByName('rb_throw_obj'), trace_rb_throw_obj);
+    this.tracer_interceptors['rb_throw_obj'] = Interceptor.attach(r.libruby.getExportByName('rb_throw_obj'), in_hook_wrapper(this, trace_rb_throw_obj));
 
     const call_ops = ["send", "opt_send_without_block", "invokesuper"];
 
@@ -2071,7 +2170,7 @@ class Hooks {
         let insnhook = insnhooks[k];
         if (insnhook !== undefined) {
           if (typeof insnhook == 'function') {            
-            this.tracer_interceptors["YARVINSN_" + k] = Interceptor.attach(v, return_callback_wrapper(insnhook, k));
+            this.tracer_interceptors["YARVINSN_" + k] = Interceptor.attach(v, return_callback_wrapper(in_hook_wrapper(this, insnhook), k));
           } else {
             //note: generally, it appears that there is a dangling trace insn
             //      with a JMP at the end. however, we can detect if there isn't
@@ -2112,13 +2211,15 @@ class Hooks {
               }  
             }
             */
-            this.tracer_interceptors["YARVINSN_" + k + "_enter"] = Interceptor.attach(v, return_callback_wrapper(insnhook.enter), k)
+            // this.tracer_interceptors["YARVINSN_" + k + "_enter"] = Interceptor.attach(v, in_hook_wrapper(this, return_callback_wrapper(insnhook.enter), k))
+            // this.tracer_interceptors["YARVINSN_" + k + "_enter"] = Interceptor.attach(v, return_callback_wrapper(insnhook.enter, k))
+            this.tracer_interceptors["YARVINSN_" + k + "_enter"] = Interceptor.attach(v, return_callback_wrapper(in_hook_wrapper(insnhook.enter), k))
           }
         } else {
-          this.tracer_interceptors["YARVINSN_" + k] = Interceptor.attach(v, return_callback_wrapper(function(args) {
+          this.tracer_interceptors["YARVINSN_" + k] = Interceptor.attach(v, in_hook_wrapper(this, return_callback_wrapper(in_hook_wrapper(function(args) {
             // log(">> YARVINSN " + k + " hit")
             log(">> " + k)
-          }, k));
+          }, k))));
         }
       } catch (e) {
         console.error("Error [trace]: Failed to instrument YARVINSN " + k + ". " + String(e))
@@ -2156,6 +2257,11 @@ class Hooks {
   }
 
   untrace() {
+    if (!this.is_tracing) {
+      // log(">> untrace() called while not tracing")
+      return;
+    }
+
     this.is_tracing = false;
     for(let [k, v] of Object.entries(this.tracer_interceptors)) {
       v.detach();
@@ -2204,164 +2310,182 @@ class Hooks {
     let _self = this;
     let hook = {
       onEnter: function(frida_args) {
-        if (r.inspecting) {
+        if (_self.in_hook) {
           return;
         }
-        let def_argc = metadata.cfunc.def_argc;
-        let rt_argc = metadata.cfunc.rt_argc;
         try {
-          if (def_argc >= 0) {
-            // log(">> cfunc: def_argc >= 0")
-            let argc;
-            // log(">> cfunc: def_argc: " + def_argc);
-            // log(">> cfunc: rt_argc: " + rt_argc);
+          _self.in_hook = true;
 
-            if (rt_argc == null) {
-              argc = def_argc + 1;
-            } else if (rt_argc != def_argc) { // might need to be >
-              argc = rt_argc;
-            } else {
-              argc = def_argc + 1;
-            }
-
-            // if (def_argc != rt_argc && rt_argc != null) {
-            //   // log(">> cfunc def_argc: " + def_argc + " != rt_argc: " + rt_argc)
-            //   argc = rt_argc + 1;
-            // } else {
-            //   argc = def_argc + 1;
-            // }
-            // log(">> cfunc: argc: " + argc);
-
-            // let argc = metadata.cfunc.rt_argc;
-            let recv = frida_args[0];
-            let argv = [];
-            for (let i=1; i<argc/*+1*/; i++) {
-              argv.push(frida_args[i]);
-            }
-            // log(">> " + cfunc_sym + " about to static_inspect")
-            let recv_inspect = r.static_inspect(recv, false, cfunc_sym);
-            if (recv_inspect == null) {
-              // log(">> falling back to rb_inspect2")
-              try {
-                recv_inspect = r.rb_inspect2(recv);
-                // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
-                //   recv_inspect = r.rb_inspect2(recv);
-                // } else {
-                //   recv_inspect = "<unknown:" + recv + ">";
-                // }
-              } catch (e) {
+          if (r.inspecting) {
+            return;
+          }
+          let def_argc = metadata.cfunc.def_argc;
+          let rt_argc = metadata.cfunc.rt_argc;
+          try {
+            if (def_argc >= 0) {
+              // log(">> cfunc: def_argc >= 0")
+              let argc;
+              // log(">> cfunc: def_argc: " + def_argc);
+              // log(">> cfunc: rt_argc: " + rt_argc);
+  
+              if (rt_argc == null) {
+                argc = def_argc + 1;
+              } else if (rt_argc != def_argc) { // might need to be >
+                argc = rt_argc;
+              } else {
+                argc = def_argc + 1;
+              }
+  
+              // if (def_argc != rt_argc && rt_argc != null) {
+              //   // log(">> cfunc def_argc: " + def_argc + " != rt_argc: " + rt_argc)
+              //   argc = rt_argc + 1;
+              // } else {
+              //   argc = def_argc + 1;
+              // }
+              // log(">> cfunc: argc: " + argc);
+  
+              // let argc = metadata.cfunc.rt_argc;
+              let recv = frida_args[0];
+              let argv = [];
+              for (let i=1; i<argc/*+1*/; i++) {
+                argv.push(frida_args[i]);
+              }
+              // log(">> " + cfunc_sym + " about to static_inspect")
+              let recv_inspect = r.static_inspect(recv, false, cfunc_sym);
+              if (recv_inspect == null) {
+                // log(">> falling back to rb_inspect2")
+                try {
+                  recv_inspect = r.rb_inspect2(recv);
+                  // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+                  //   recv_inspect = r.rb_inspect2(recv);
+                  // } else {
+                  //   recv_inspect = "<unknown:" + recv + ">";
+                  // }
+                } catch (e) {
+                  recv_inspect = "<unknown:" + recv + ">"
+                }
+              } else if (recv_inspect == -1) {
                 recv_inspect = "<unknown:" + recv + ">"
               }
-            } else if (recv_inspect == -1) {
-              recv_inspect = "<unknown:" + recv + ">"
-            }
-
-            // log(">> onEnter hook: recv_inspect: " + recv_inspect)
-            let argv_inspect = [];
-            let i = 0;
-            for (let v of argv) {
-              if (v == r.Qnil) {
-                argv_inspect.push("nil");
-              } else {
-                argv_inspect.push(r.rb_inspect2(v));
-                // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
-                //   argv_inspect.push(r.rb_inspect2(v));
-                // } else {
-                //   argv_inspect.push("<uninspectable>");
-                // }
+  
+              // log(">> onEnter hook: recv_inspect: " + recv_inspect)
+              let argv_inspect = [];
+              let i = 0;
+              for (let v of argv) {
+                if (v == r.Qnil) {
+                  argv_inspect.push("nil");
+                } else {
+                  argv_inspect.push(r.rb_inspect2(v));
+                  // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+                  //   argv_inspect.push(r.rb_inspect2(v));
+                  // } else {
+                  //   argv_inspect.push("<uninspectable>");
+                  // }
+                }
+                i += 1;
               }
-              i += 1;
-            }
-  
-            let argv_inspect_s = "";
-            if (argc > 1) {
-              //argv_inspect_s = ", " + JSON.stringify(argv_inspect).slice(1,-1);
-              argv_inspect_s = ", " + argv_inspect.join(", ");
-            }
-            this.call_str = metadata.cfunc.func_s + "(" + recv_inspect + argv_inspect_s + ")"
-          } else if (def_argc == -1) {
-            let argc = frida_args[0];
-            let argv_p = frida_args[1];
-            let recv = frida_args[2];
-  
-            let recv_inspect = r.rb_inspect2(recv);
-            // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
-            //   recv_inspect = r.rb_inspect2(recv);
-            // } else {
-            //   recv_inspect = r.rb_inspect2(recv);
-            // }
-
-            let argv_inspect = [];
-  
-            for (let i=0; i < argc; i++) {
-              let v = argv_p.add(i*Process.pointerSize).readPointer();
-              if (v == r.Qnil) {
-                argv_inspect.push("nil");
-              } else {
-                argv_inspect.push(r.rb_inspect2(v));
-                // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
-                //   argv_inspect.push(r.rb_inspect2(v));
-                // } else {
-                //   argv_inspect.push(r.rb_inspect2(v));
-                // }
+    
+              let argv_inspect_s = "";
+              if (argc > 1) {
+                //argv_inspect_s = ", " + JSON.stringify(argv_inspect).slice(1,-1);
+                argv_inspect_s = ", " + argv_inspect.join(", ");
               }
+              this.call_str = metadata.cfunc.func_s + "(" + recv_inspect + argv_inspect_s + ")"
+            } else if (def_argc == -1) {
+              let argc = frida_args[0];
+              let argv_p = frida_args[1];
+              let recv = frida_args[2];
+    
+              let recv_inspect = r.rb_inspect2(recv);
+              // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+              //   recv_inspect = r.rb_inspect2(recv);
+              // } else {
+              //   recv_inspect = r.rb_inspect2(recv);
+              // }
+  
+              let argv_inspect = [];
+    
+              for (let i=0; i < argc; i++) {
+                let v = argv_p.add(i*Process.pointerSize).readPointer();
+                if (v == r.Qnil) {
+                  argv_inspect.push("nil");
+                } else {
+                  argv_inspect.push(r.rb_inspect2(v));
+                  // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+                  //   argv_inspect.push(r.rb_inspect2(v));
+                  // } else {
+                  //   argv_inspect.push(r.rb_inspect2(v));
+                  // }
+                }
+              }
+    
+              let argv_inspect_str = "[" + argv_inspect.join(", ") + "]";
+              this.call_str = metadata.cfunc.func_s + "(" + argc + ", " + argv_inspect_str + ", " + recv_inspect + ")"
+            } else if (def_argc == -2) {
+              //let argc = metadata.cfunc.rt_argc; //unused
+              let recv = frida_args[0];
+              let args = frida_args[1]; // rb_ary_new4(...)
+    
+              // let recv_inspect = r.rb_inspect2(recv);
+              let recv_inspect = r.rb_inspect2(recv);
+              // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+              //   recv_inspect = r.rb_inspect2(recv);
+              // } else {
+              //   recv_inspect = r.rb_inspect2(recv);
+              // }
+  
+              // let args_inspect_s = r.rb_inspect2(args);
+              let args_inspect_s = r.rb_inspect2(args);
+              // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
+              //   args_inspect_s = r.rb_inspect2(args);
+              // } else {
+              //   args_inspect_s = r.rb_inspect2(args);
+              // }
+    
+              this.call_str = metadata.cfunc.func_s + "(" + recv_inspect + ", " + args_inspect_s  + ")"
             }
+            log(">> cfunc: " + this.call_str)
   
-            let argv_inspect_str = "[" + argv_inspect.join(", ") + "]";
-            this.call_str = metadata.cfunc.func_s + "(" + argc + ", " + argv_inspect_str + ", " + recv_inspect + ")"
-          } else if (def_argc == -2) {
-            //let argc = metadata.cfunc.rt_argc; //unused
-            let recv = frida_args[0];
-            let args = frida_args[1]; // rb_ary_new4(...)
-  
-            // let recv_inspect = r.rb_inspect2(recv);
-            let recv_inspect = r.rb_inspect2(recv);
-            // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
-            //   recv_inspect = r.rb_inspect2(recv);
-            // } else {
-            //   recv_inspect = r.rb_inspect2(recv);
-            // }
+            if (autoremove_onEnter) {
+              _self.cfunc_hooks[cfunc_func_p].detach()
+              delete _self.cfunc_hooks[cfunc_func_p]
+              delete _self.cfunc_hooks_metadatas[cfunc_func_p]
+            }
+          } catch(e) {
+            // log(">> cfunc: " + metadata.cfunc.func_s + "(def_argc: " + def_argc + ", rt_argc: " + rt_argc + ")");
+            log("Error [hook_cfunc::hook.onEnter::" + cfunc_sym + "]: " + String(e))
+          }  
+        } finally {
+          _self.in_hook = false;
+        }
+      },
+      onLeave: function(retval) {
+        if (_self.in_hook) {
+          return;
+        }
+        try {
+          _self.in_hook = true;
 
-            // let args_inspect_s = r.rb_inspect2(args);
-            let args_inspect_s = r.rb_inspect2(args);
-            // if (!unsafe_to_rb_inspect2.has(cfunc_sym)) {
-            //   args_inspect_s = r.rb_inspect2(args);
-            // } else {
-            //   args_inspect_s = r.rb_inspect2(args);
-            // }
-  
-            this.call_str = metadata.cfunc.func_s + "(" + recv_inspect + ", " + args_inspect_s  + ")"
+          if (r.inspecting) {
+            return;
           }
-          log(">> cfunc: " + this.call_str)
-
-          if (autoremove_onEnter) {
+          try {
+            if (this.call_str !== undefined) {
+              log(">> cfunc: " + this.call_str + " -> " + r.rb_inspect2(retval));
+            } else {
+              log(">> cfunc: " + metadata.cfunc.func_s + "(...) -> " + r.rb_inspect2(retval));
+            }
+          } catch (e) {
+            log(">> cfunc: " + metadata.cfunc.func_s + "(...) -> ???");
+            log("Error [hook_cfunc::hook.onLeave::" + cfunc_sym + "]: " + String(e))
+          }
+          if (autoremove_onLeave) {
             _self.cfunc_hooks[cfunc_func_p].detach()
             delete _self.cfunc_hooks[cfunc_func_p]
             delete _self.cfunc_hooks_metadatas[cfunc_func_p]
           }
-        } catch(e) {
-          // log(">> cfunc: " + metadata.cfunc.func_s + "(def_argc: " + def_argc + ", rt_argc: " + rt_argc + ")");
-          log("Error [hook_cfunc::hook.onEnter::" + cfunc_sym + "]: " + String(e))
-        }
-      },
-      onLeave: function(retval) {
-        if (r.inspecting) {
-          return;
-        }
-        try {
-          if (this.call_str !== undefined) {
-            log(">> cfunc: " + this.call_str + " -> " + r.rb_inspect2(retval));
-          } else {
-            log(">> cfunc: " + metadata.cfunc.func_s + "(...) -> " + r.rb_inspect2(retval));
-          }
-        } catch (e) {
-          log(">> cfunc: " + metadata.cfunc.func_s + "(...) -> ???");
-          log("Error [hook_cfunc::hook.onLeave::" + cfunc_sym + "]: " + String(e))
-        }
-        if (autoremove_onLeave) {
-          _self.cfunc_hooks[cfunc_func_p].detach()
-          delete _self.cfunc_hooks[cfunc_func_p]
-          delete _self.cfunc_hooks_metadatas[cfunc_func_p]
+        } finally {
+          _self.in_hook = false;
         }
       }
     }
@@ -2399,7 +2523,7 @@ class Hooks {
       
       if (cfunc_sym.includes("_raise")) {// || cfunc_sym == "rb_class_s_new" || cfunc_sym == "rb_fiber_initialize" /*|| (metadata.recv.inspect == "Fiber" && metadata.method.mid == "new")*/) {
         //log(">> hook_cfunc: hooking only entry to " + cfunc_func)
-        this.cfunc_hooks[cfunc_func_p] = Interceptor.attach(cfunc_func_p, hook.onEnter);
+        this.cfunc_hooks[cfunc_func_p] = Interceptor.attach(cfunc_func_p, in_hook_wrapper(_self, hook.onEnter));
       } else {
         this.cfunc_hooks[cfunc_func_p] = Interceptor.attach(cfunc_func_p, hook);
       }
@@ -2409,7 +2533,7 @@ class Hooks {
         // throw String(e) + " // ruby-trace: failed on " + cfunc_func
         try {
           autoremove_onEnter = autoremove_onLeave;
-          this.cfunc_hooks[cfunc_func_p] = Interceptor.attach(cfunc_func_p, hook.onEnter);
+          this.cfunc_hooks[cfunc_func_p] = Interceptor.attach(cfunc_func_p, in_hook_wrapper(_self, hook.onEnter));
           log("Error [hook_cfunc]: failed on " + cfunc_func + ", but hooked entry")
         } catch (e) {
           if (String(e).includes("please file a bug")) {
@@ -2432,7 +2556,6 @@ module.exports = function (parameters) {
 
   return singleton;
 }
-
 
 function trace_rb_vm_call0(args) {
   //note: this seemingly breaks fibers. however, w/o it, fiber execution still
@@ -2563,6 +2686,7 @@ function trace_rb_vm_call_cfunc(args) {
     console.error("Error [trace_rb_vm_call_cfunc]: " + String(e))
   }
 }
+
 
 let leave = function(name) {
   return function() {
@@ -2913,8 +3037,23 @@ function trace_rb_ec_tag_jump(sym_name) {
       } else {
         // log(">> errinfo is not a T_IMEMO")
         mesg = errinfo_p;
-        mesg_throwobj_str = r.rb_inspect2(mesg)
+        switch (vm.ruby_version) {
+          case 26:
+          case 27:
+          case 30: {
+            // mesg_throwobj_str = r.rb_inspect2(mesg)
+            mesg_throwobj_str = r.dyn_inspect(mesg)
+            break;
+          }
+          case 31:
+          default: {
+            //mesg_throwobj_str = r.rb_inspect2(mesg)
+            mesg_throwobj_str = r.dyn_inspect(mesg)
+          }
+        }
+        // mesg_throwobj_str = "yolo" //r.rb_inspect2(mesg)
       }
+      // return;
 
       if (mesg == null) {
         cause = r.rb_attr_get(throwobj, r.cause_sym)

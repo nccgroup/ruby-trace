@@ -274,6 +274,14 @@ class RubyVM {
 
         r.ruby_eval(`
         require 'json'
+        module RubyTrace__
+          #def self.enable
+          #end
+
+          #def self.disable
+          #end
+        end
+
         def __ruby_trace_inspect(obj)
           begin
             #any_to_s = Kernel.instance_method(:to_s).bind(obj).call()

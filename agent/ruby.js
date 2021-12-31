@@ -215,13 +215,15 @@ class Ruby {
 
     // this.rb_funcallv = new NativeFunction(this.rb_funcallv_ptr, VALUE, [VALUE, ID, 'int', VALUE]);
     this.iterate_method_addr = this.sym_to_addr_map['iterate_method'].address;
-
+    this.rb_define_module_function = new NativeFunction(libruby.getExportByName('rb_define_module_function'), 'void', [VALUE, 'pointer', 'pointer', 'int']);
 
     this.rb_str_new_cstr = new NativeFunction(libruby.getExportByName('rb_str_new_cstr'), VALUE, ['pointer']);
     this.rb_str_empty = new NativeFunction(this.sym_to_addr_map['rb_str_empty'].address, VALUE, [VALUE]);
     this.rb_type = new NativeFunction(this.sym_to_addr_map['rb_type'].address, 'int', [VALUE]);
     this.rb_class_of = new NativeFunction(this.sym_to_addr_map['rb_class_of'].address, VALUE, [VALUE]);
-    
+    this.rb_class_inherited_p = new NativeFunction(libruby.getExportByName('rb_class_inherited_p'), VALUE, [VALUE, VALUE]);
+    this.rb_obj_is_kind_of = new NativeFunction(libruby.getExportByName('rb_obj_is_kind_of'), VALUE, [VALUE, VALUE]);
+
     this.rb_intern = new NativeFunction(libruby.getExportByName('rb_intern'), ID, ['pointer']);
     this.rb_string_value_cstr = new NativeFunction(libruby.getExportByName('rb_string_value_cstr'), 'pointer', [VALUE_ptr]);
     this.rb_sym2str = new NativeFunction(libruby.getExportByName('rb_sym2str'), VALUE, [VALUE]);
@@ -903,6 +905,21 @@ class Ruby {
 
       let o = this.inspect_map[klass_str];
       if (o === undefined) {
+        // if (this.Qtrue.equals(this.rb_obj_is_kind_of(obj, this.rb_eException.readPointer()))) {
+        //   o = this.inspect_map['Exception'];
+        // }
+
+        //note: exc_inspect seems to be a problem, so we just recreate what exc_inspect does with
+        //      exc_to_s.
+        if (this.Qtrue.equals(this.rb_class_inherited_p(klass, this.rb_eException.readPointer()))) {
+          let exc_to_s = this.to_s_map['Exception'];
+
+          let msg = exc_to_s['func'](obj)
+          return "<#" + this.ruby_str_to_js_str(mod_name) + ": " + this.ruby_str_to_js_str(msg) + ">";
+        }
+      }
+
+      if (o === undefined) {
         if (["Enumerator", "Range", "Proc", "Integer"].includes(klass_str)) {
           // log(">> dyn_inspect: EPI")
           return this.ruby_str_to_js_str(this.rb_any_to_s(obj))
@@ -1038,6 +1055,12 @@ class Ruby {
 
   rb_inspect2(obj, force=false) {
     //note: rb_inspect uses rb_funcallv internally
+    let already_exception = false;
+    let ex = this.rb_errinfo();
+    if (!ex.isNull() && !ex.equals(this.Qnil)) {
+      already_exception = true;
+    }
+
     let klass = this.rb_class_of(obj);
     if (!klass.isNull() || force) {
       let inspect;
@@ -1052,12 +1075,17 @@ class Ruby {
         log(">> Error [rb_inspect2]: " + String(e))
         return "<uninspectable of type " + this.rb_inspect3(klass) + ">";
       }
-      let ex = this.rb_errinfo()
-      if (!ex.isNull() && !ex.equals(this.Qnil)) {
-        let ex_inspect = this.static_inspect(ex)
-        log(">> Error [[rb_inspect]]: Exception raised: " + ex_inspect + " (" + ex + "), inspect ret: " + this.ruby_str_to_js_str(inspect) + " (" + inspect + ")")
-        // this.rb_set_errinfo(this.Qnil);
-        return "<uninspectable of type " + this.rb_inspect3(klass) + ">";
+      if (!already_exception) {
+        let ex = this.rb_errinfo()
+        if (!ex.isNull() && !ex.equals(this.Qnil)) {
+          let ex_inspect = this.static_inspect(ex)
+          log(">> Error [[rb_inspect]]: Exception raised: " + ex_inspect + " (" + ex + "), inspect ret: " + this.ruby_str_to_js_str(inspect) + " (" + inspect + ")")
+          this.rb_set_errinfo(this.Qnil); //note: may need to remove this. unclear...
+          // if (inspect != null && !ptr(0).equals(inspect) && !this.Qnil.equals(inspect)) {
+          //   return this.ruby_str_to_js_str(inspect);
+          // }
+          return "<uninspectable of type " + this.rb_inspect3(klass) + ">";
+        }  
       }
       return this.ruby_str_to_js_str(inspect)
     } else {
