@@ -6,11 +6,11 @@ It currently supports ruby 2.6-3.1.
 # Install
 
 ```
-$ sudo npm install -g --unsafe-perm ruby-trace
+$ sudo npm install -g ruby-trace
 ```
 
-***Note:*** `--unsafe-perm` appears to be necessary when installing as root due
-            to how the `frida` depdendency builds during install.
+***Note:*** `--unsafe-perm` may be needed when installing as root with older
+            versions of npm due to how the `frida` depdendency builds during install.
 
 # Building from Source
 
@@ -29,7 +29,7 @@ tracing. If you want to trace against an entire program, you can do something
 like the following:
 
 ```
-$ ruby-trace -- ruby -e 'TracePoint.new(:call) { |tp| }.enable' -e "$(cat test/readme.rb)"
+$ ruby-trace -- ruby -e 'TracePoint.new(:call) { |tp| }.enable' -e "$(cat test/misc/readme.rb)"
 ```
 
 Alternatively, for more fine-grained tracing, you would write something like
